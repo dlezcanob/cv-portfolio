@@ -3,14 +3,13 @@
 import { useState, useEffect } from 'react'
 import { createClient } from '@/lib/supabase/client'
 import type { Educacion } from '@/lib/types'
-import { Plus, Trash2, Edit2, Save, X, Upload } from 'lucide-react'
+import { Plus, Trash2, Edit2, Save, X } from 'lucide-react'
 
 export default function EducacionPage() {
   const [items, setItems] = useState<Educacion[]>([])
   const [loading, setLoading] = useState(true)
   const [showForm, setShowForm] = useState(false)
   const [editingId, setEditingId] = useState<string | null>(null)
-  const [uploading, setUploading] = useState(false)
   const supabase = createClient()
 
   const [form, setForm] = useState({
