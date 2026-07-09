@@ -13,9 +13,8 @@ async function getBrowser() {
     const puppeteerCore = (await import('puppeteer-core')).default;
     return puppeteerCore.launch({
       args: chromium.args,
-      defaultViewport: chromium.defaultViewport,
       executablePath: await chromium.executablePath(),
-      headless: chromium.headless,
+      headless: true,
     });
   } else {
     const puppeteerCore = (await import('puppeteer-core')).default;
