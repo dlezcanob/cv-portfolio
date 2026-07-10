@@ -1,29 +1,24 @@
 'use client'
 
-/**
- * CRUD de experiencias laborales.
- * Permite agregar, editar, eliminar y reordenar experiencias.
- */
-
 import { useState, useEffect } from 'react'
 import { createClient } from '@/lib/supabase/client'
 import type { Experiencia } from '@/lib/types'
-import { Plus, Trash2, Edit2, Eye, EyeOff, Save, X } from 'lucide-react'
+import { Plus, Trash2, Edit2, Eye, EyeOff, Save, X, Upload, FileText } from 'lucide-react'
 
 export default function ExperienciasPage() {
   const [experiencias, setExperiencias] = useState<Experiencia[]>([])
   const [loading, setLoading] = useState(true)
   const [showForm, setShowForm] = useState(false)
   const [editingId, setEditingId] = useState<string | null>(null)
+  const [uploading, setUploading] = useState(false)
   const supabase = createClient()
 
-  // Form state
   const [form, setForm] = useState({
     fecha_inicio: '',
     fecha_fin: 'Actualidad',
     institucion: '',
     cargo: '',
-    funciones: '',  // Textarea, una función por línea
+    funciones: '',
   })
 
   useEffect(() => {
@@ -82,7 +77,7 @@ export default function ExperienciasPage() {
   }
 
   async function handleDelete(id: string) {
-    if (!confirm('¿Estás seguro de eliminar esta experiencia?')) return
+    if (!confirm('Eliminar esta experiencia?')) return
     await supabase.from('experiencias').delete().eq('id', id)
     await loadExperiencias()
   }
@@ -92,9 +87,24 @@ export default function ExperienciasPage() {
     await loadExperiencias()
   }
 
-  if (loading) {
-    return <div className="text-center py-10 text-gray-500">Cargando...</div>
+  async function handleFileUpload(expId: string, file: File) {
+    setUploading(true)
+    const ext = file.name.split('.').pop()
+    const filePath = `experiencias/${expId}_${Date.now()}.${ext}`
+
+    const { error } = await supabase.storage.from('archivos').upload(filePath, file, { upsert: true })
+
+    if (!error) {
+      const { data: urlData } = supabase.storage.from('archivos').getPublicUrl(filePath)
+      await supabase.from('experiencias').update({ archivo_url: urlData.publicUrl }).eq('id', expId)
+      await loadExperiencias()
+    } else {
+      alert('Error al subir archivo: ' + error.message)
+    }
+    setUploading(false)
   }
+
+  if (loading) return <div className="text-center py-10 text-gray-500">Cargando...</div>
 
   return (
     <div>
@@ -108,95 +118,49 @@ export default function ExperienciasPage() {
         </button>
       </div>
 
-      {/* Formulario */}
       {showForm && (
         <form onSubmit={handleSubmit} className="bg-white border border-gray-200 rounded-lg p-5 shadow-sm mb-6 space-y-4">
           <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
             <div>
               <label className="block text-sm font-medium text-gray-700 mb-1">Fecha inicio (MM/YYYY)</label>
-              <input
-                type="text"
-                value={form.fecha_inicio}
-                onChange={(e) => setForm({ ...form, fecha_inicio: e.target.value })}
-                placeholder="06/2025"
-                required
-                className="w-full px-3 py-2 border border-gray-300 rounded-md text-sm focus:ring-2 focus:ring-[#1B4F72] focus:outline-none"
-              />
+              <input type="text" value={form.fecha_inicio} onChange={(e) => setForm({ ...form, fecha_inicio: e.target.value })} placeholder="06/2025" required className="w-full px-3 py-2 border border-gray-300 rounded-md text-sm focus:ring-2 focus:ring-[#1B4F72] focus:outline-none" />
             </div>
             <div>
               <label className="block text-sm font-medium text-gray-700 mb-1">Fecha fin</label>
-              <input
-                type="text"
-                value={form.fecha_fin}
-                onChange={(e) => setForm({ ...form, fecha_fin: e.target.value })}
-                placeholder="Actualidad"
-                required
-                className="w-full px-3 py-2 border border-gray-300 rounded-md text-sm focus:ring-2 focus:ring-[#1B4F72] focus:outline-none"
-              />
+              <input type="text" value={form.fecha_fin} onChange={(e) => setForm({ ...form, fecha_fin: e.target.value })} placeholder="Actualidad" required className="w-full px-3 py-2 border border-gray-300 rounded-md text-sm focus:ring-2 focus:ring-[#1B4F72] focus:outline-none" />
             </div>
           </div>
 
           <div>
-            <label className="block text-sm font-medium text-gray-700 mb-1">Institución</label>
-            <input
-              type="text"
-              value={form.institucion}
-              onChange={(e) => setForm({ ...form, institucion: e.target.value })}
-              placeholder="SUNARP, QALI WARMA, etc."
-              required
-              className="w-full px-3 py-2 border border-gray-300 rounded-md text-sm focus:ring-2 focus:ring-[#1B4F72] focus:outline-none"
-            />
+            <label className="block text-sm font-medium text-gray-700 mb-1">Institucion</label>
+            <input type="text" value={form.institucion} onChange={(e) => setForm({ ...form, institucion: e.target.value })} required className="w-full px-3 py-2 border border-gray-300 rounded-md text-sm focus:ring-2 focus:ring-[#1B4F72] focus:outline-none" />
           </div>
 
           <div>
             <label className="block text-sm font-medium text-gray-700 mb-1">Cargo</label>
-            <input
-              type="text"
-              value={form.cargo}
-              onChange={(e) => setForm({ ...form, cargo: e.target.value })}
-              placeholder="Jefe de proyectos TI"
-              required
-              className="w-full px-3 py-2 border border-gray-300 rounded-md text-sm focus:ring-2 focus:ring-[#1B4F72] focus:outline-none"
-            />
+            <input type="text" value={form.cargo} onChange={(e) => setForm({ ...form, cargo: e.target.value })} required className="w-full px-3 py-2 border border-gray-300 rounded-md text-sm focus:ring-2 focus:ring-[#1B4F72] focus:outline-none" />
           </div>
 
           <div>
-            <label className="block text-sm font-medium text-gray-700 mb-1">
-              Funciones (una por línea)
-            </label>
-            <textarea
-              value={form.funciones}
-              onChange={(e) => setForm({ ...form, funciones: e.target.value })}
-              rows={6}
-              placeholder="Dirección estratégica y administrativa de la empresa.&#10;Desarrollo de servicios de consultoría en transformación digital.&#10;Implementación de soluciones tecnológicas."
-              className="w-full px-3 py-2 border border-gray-300 rounded-md text-sm focus:ring-2 focus:ring-[#1B4F72] focus:outline-none"
-            />
-            <p className="text-xs text-gray-400 mt-1">Cada línea será un bullet (✓) en el CV</p>
+            <label className="block text-sm font-medium text-gray-700 mb-1">Funciones (una por linea)</label>
+            <textarea value={form.funciones} onChange={(e) => setForm({ ...form, funciones: e.target.value })} rows={6} className="w-full px-3 py-2 border border-gray-300 rounded-md text-sm focus:ring-2 focus:ring-[#1B4F72] focus:outline-none" />
+            <p className="text-xs text-gray-400 mt-1">Cada linea sera un bullet en el CV</p>
           </div>
 
           <div className="flex gap-3">
-            <button
-              type="submit"
-              className="flex items-center gap-2 bg-[#1B4F72] text-white px-4 py-2 rounded-md text-sm font-medium hover:bg-[#2E86C1] transition-colors min-h-[44px]"
-            >
+            <button type="submit" className="flex items-center gap-2 bg-[#1B4F72] text-white px-4 py-2 rounded-md text-sm font-medium hover:bg-[#2E86C1] min-h-[44px]">
               <Save size={16} /> {editingId ? 'Actualizar' : 'Guardar'}
             </button>
-            <button
-              type="button"
-              onClick={resetForm}
-              className="flex items-center gap-2 border border-gray-300 text-gray-600 px-4 py-2 rounded-md text-sm hover:bg-gray-50 transition-colors min-h-[44px]"
-            >
+            <button type="button" onClick={resetForm} className="flex items-center gap-2 border border-gray-300 text-gray-600 px-4 py-2 rounded-md text-sm hover:bg-gray-50 min-h-[44px]">
               <X size={16} /> Cancelar
             </button>
           </div>
         </form>
       )}
 
-      {/* Lista de experiencias */}
       {experiencias.length === 0 ? (
         <div className="text-center py-10 text-gray-500">
           <p className="text-lg mb-2">No hay experiencias registradas</p>
-          <p className="text-sm">Haz clic en &ldquo;Agregar&rdquo; para registrar tu primera experiencia</p>
         </div>
       ) : (
         <div className="space-y-3">
@@ -208,14 +172,32 @@ export default function ExperienciasPage() {
               <div className="flex items-start justify-between">
                 <div className="flex-1">
                   <div className="flex items-center gap-2 mb-1">
-                    <span className="text-xs text-gray-500 bg-gray-100 px-2 py-0.5 rounded">{exp.fecha_inicio} – {exp.fecha_fin}</span>
+                    <span className="text-xs text-gray-500 bg-gray-100 px-2 py-0.5 rounded">{exp.fecha_inicio} - {exp.fecha_fin}</span>
                     {!exp.visible && <span className="text-xs text-orange-500 bg-orange-50 px-2 py-0.5 rounded">Oculta</span>}
+                    {exp.archivo_url && <span className="text-xs text-green-600 bg-green-50 px-2 py-0.5 rounded">PDF adjunto</span>}
                   </div>
                   <p className="font-bold text-gray-800">{exp.cargo}</p>
                   <p className="text-sm text-[#2E86C1]">{exp.institucion}</p>
                   <p className="text-xs text-gray-500 mt-1">{Array.isArray(exp.funciones) ? exp.funciones.length : 0} funciones</p>
                 </div>
                 <div className="flex items-center gap-1">
+                  {/* Upload archivo */}
+                  <label className={`p-2 hover:bg-blue-50 rounded cursor-pointer ${uploading ? 'opacity-50' : ''}`} title="Subir constancia/certificado PDF o imagen">
+                    <Upload size={16} className="text-blue-500" />
+                    <input
+                      type="file"
+                      accept=".pdf,.jpg,.jpeg,.png"
+                      className="hidden"
+                      disabled={uploading}
+                      onChange={(e) => { if (e.target.files?.[0]) handleFileUpload(exp.id, e.target.files[0]) }}
+                    />
+                  </label>
+                  {/* Ver archivo */}
+                  {exp.archivo_url && (
+                    <a href={exp.archivo_url} target="_blank" rel="noopener noreferrer" className="p-2 hover:bg-gray-100 rounded" title="Ver archivo adjunto">
+                      <FileText size={16} className="text-green-500" />
+                    </a>
+                  )}
                   <button onClick={() => toggleVisible(exp)} className="p-2 hover:bg-gray-100 rounded" title={exp.visible ? 'Ocultar' : 'Mostrar'}>
                     {exp.visible ? <Eye size={16} className="text-gray-500" /> : <EyeOff size={16} className="text-orange-500" />}
                   </button>
