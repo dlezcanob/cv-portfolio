@@ -5,12 +5,13 @@ import Link from 'next/link'
 import { usePathname } from 'next/navigation'
 import { createClient } from '@/lib/supabase/client'
 import { useRouter } from 'next/navigation'
-import { LayoutDashboard, Briefcase, GraduationCap, Award, LogOut, FileDown } from 'lucide-react'
+import { LayoutDashboard, Briefcase, GraduationCap, Award, LogOut, FileDown, User } from 'lucide-react'
 
 const NAV_ITEMS = [
   { href: '/admin', label: 'Dashboard', icon: LayoutDashboard },
+  { href: '/admin/perfil', label: 'Perfil', icon: User },
   { href: '/admin/experiencias', label: 'Experiencias', icon: Briefcase },
-  { href: '/admin/educacion', label: 'Educación', icon: GraduationCap },
+  { href: '/admin/educacion', label: 'Educacion', icon: GraduationCap },
   { href: '/admin/certificaciones', label: 'Certificaciones', icon: Award },
   { href: '/admin/generar-pdf', label: 'Generar PDF', icon: FileDown },
 ]
