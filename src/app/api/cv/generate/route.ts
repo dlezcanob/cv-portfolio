@@ -44,7 +44,6 @@ function drawText(ctx: DrawContext, text: string, options: { size?: number; font
   const indent = options.indent || 0;
   const maxWidth = options.maxWidth || (CONTENT_WIDTH - indent);
 
-  // Word wrap
   const words = text.split(' ');
   let line = '';
   const lines: string[] = [];
@@ -98,7 +97,6 @@ function drawSectionTitle(ctx: DrawContext, title: string) {
     color: BLUE,
   });
   ctx.y -= 4;
-  // Underline
   ctx.page.drawLine({
     start: { x: centerX, y: ctx.y },
     end: { x: centerX + titleWidth, y: ctx.y },
@@ -120,7 +118,6 @@ export async function POST(request: NextRequest): Promise<NextResponse> {
 
     const supabase = createServerSupabaseClient();
 
-    // Obtener datos
     const { data: perfil } = await supabase.from('perfil').select('*').single();
     if (!perfil) return NextResponse.json({ error: 'No hay perfil configurado' }, { status: 400 });
 
@@ -128,7 +125,6 @@ export async function POST(request: NextRequest): Promise<NextResponse> {
     const { data: educacion } = await supabase.from('educacion').select('*').eq('visible', true).order('orden');
     const { data: certificaciones } = await supabase.from('certificaciones').select('*').eq('visible', true).order('orden');
 
-    // Crear PDF
     const doc = await PDFDocument.create();
     const font = await doc.embedFont(StandardFonts.Helvetica);
     const fontBold = await doc.embedFont(StandardFonts.HelveticaBold);
@@ -137,33 +133,30 @@ export async function POST(request: NextRequest): Promise<NextResponse> {
     newPage(ctx);
 
     // === HEADER ===
-    // Contacto
-    drawText(ctx, `${perfil.telefono}  |  ${perfil.email}`, { size: 9, color: GRAY });
+    drawText(ctx, perfil.telefono + '  |  ' + perfil.email, { size: 9, color: GRAY });
     ctx.y -= 2;
-    drawText(ctx, perfil.linkedin_url || '', { size: 8, color: BLUE });
+    if (perfil.linkedin_url) {
+      drawText(ctx, perfil.linkedin_url, { size: 8, color: BLUE });
+    }
     ctx.y -= 14;
 
-    // Nombre
     drawText(ctx, perfil.nombre_completo, { size: 18, font: fontBold });
     ctx.y -= 4;
 
-    // Linea azul
     drawLine(ctx);
     ctx.y -= 6;
 
-    // Titulo + Resumen
     drawText(ctx, perfil.titulo_profesional + '.', { size: 10, font: fontBold });
     ctx.y -= 4;
     drawText(ctx, perfil.resumen, { size: 10, color: GRAY });
     ctx.y -= 8;
 
-    // Certificaciones principales
     drawText(ctx, 'Certificaciones principales en:', { size: 10 });
     ctx.y -= 2;
     if (certificaciones) {
       for (const cert of certificaciones) {
-        const text = cert.codigo ? `${cert.nombre} ${cert.codigo}` : cert.nombre;
-        drawText(ctx, `\u2022  ${text}`, { size: 10, indent: 10 });
+        const text = cert.codigo ? cert.nombre + ' ' + cert.codigo : cert.nombre;
+        drawText(ctx, '- ' + text, { size: 10, indent: 10 });
       }
     }
     ctx.y -= 6;
@@ -174,25 +167,20 @@ export async function POST(request: NextRequest): Promise<NextResponse> {
     if (experiencias) {
       for (const exp of experiencias) {
         checkNewPage(ctx, 60);
-        // Fecha
-        drawText(ctx, `${exp.fecha_inicio} \u2013 ${exp.fecha_fin}`, { size: 10, font: fontBold });
-        // Institucion
+        drawText(ctx, exp.fecha_inicio + ' - ' + exp.fecha_fin, { size: 10, font: fontBold });
         drawText(ctx, exp.institucion, { size: 10, font: fontBold });
-        // Cargo
         drawText(ctx, exp.cargo, { size: 10, font: fontBold });
         ctx.y -= 2;
 
-        // Funciones
         const funciones = Array.isArray(exp.funciones) ? exp.funciones : [];
         if (funciones.length > 0) {
           drawText(ctx, 'Funciones asignadas:', { size: 9, font: fontBold });
           ctx.y -= 1;
           for (const f of funciones) {
-            drawText(ctx, `\u2713  ${f}`, { size: 9, indent: 14, color: GRAY });
+            drawText(ctx, '>  ' + f, { size: 9, indent: 14, color: GRAY });
           }
         }
 
-        // Logros
         const logros = Array.isArray(exp.logros) ? exp.logros : [];
         if (logros.length > 0) {
           ctx.y -= 4;
@@ -202,13 +190,12 @@ export async function POST(request: NextRequest): Promise<NextResponse> {
           }
         }
 
-        // Proyectos
         const proyectos = Array.isArray(exp.proyectos) ? exp.proyectos : [];
         if (proyectos.length > 0) {
           ctx.y -= 4;
           drawText(ctx, 'Proyectos principales:', { size: 9, font: fontBold, indent: 14 });
           proyectos.forEach((p: string, i: number) => {
-            drawText(ctx, `${i + 1}. ${p}`, { size: 9, indent: 20, color: GRAY });
+            drawText(ctx, (i + 1) + '. ' + p, { size: 9, indent: 20, color: GRAY });
           });
         }
 
@@ -221,18 +208,17 @@ export async function POST(request: NextRequest): Promise<NextResponse> {
       drawSectionTitle(ctx, 'Formacion');
       for (const edu of educacion) {
         checkNewPage(ctx, 30);
-        drawText(ctx, `${edu.fecha_inicio} - ${edu.fecha_fin}`, { size: 10, font: fontBold });
+        drawText(ctx, edu.fecha_inicio + ' - ' + edu.fecha_fin, { size: 10, font: fontBold });
         drawText(ctx, edu.institucion, { size: 10, font: fontBold });
         drawText(ctx, edu.titulo, { size: 10, color: GRAY });
         ctx.y -= 8;
       }
     }
 
-    // === MODO DOCUMENTADO: Anexar certificados ===
+    // === MODO DOCUMENTADO ===
     if (mode === 'documentado') {
       const cvPageCount = doc.getPageCount();
 
-      // Recopilar todos los archivos de sustento
       const archivos: { url: string }[] = [];
       if (experiencias) {
         for (const e of experiencias) { if (e.archivo_url) archivos.push({ url: e.archivo_url }); }
@@ -244,7 +230,6 @@ export async function POST(request: NextRequest): Promise<NextResponse> {
         for (const c of certificaciones) { if (c.archivo_url) archivos.push({ url: c.archivo_url }); }
       }
 
-      // Anexar cada archivo
       for (const archivo of archivos) {
         try {
           const response = await fetch(archivo.url);
@@ -270,11 +255,10 @@ export async function POST(request: NextRequest): Promise<NextResponse> {
         } catch { continue; }
       }
 
-      // Watermark en paginas de certificados
       if (empresa && empresa.trim()) {
         const wFont = await doc.embedFont(StandardFonts.Helvetica);
         const pages = doc.getPages();
-        const watermarkText = `Exclusivo para evaluacion en ${empresa}`;
+        const watermarkText = 'Exclusivo para evaluacion en ' + empresa;
         for (let i = cvPageCount; i < pages.length; i++) {
           const pg = pages[i];
           const { width, height } = pg.getSize();
@@ -291,17 +275,16 @@ export async function POST(request: NextRequest): Promise<NextResponse> {
       }
     }
 
-    // Guardar y retornar
     const pdfBytes = await doc.save();
     const finalBuffer = Buffer.from(pdfBytes);
     const modeLabel = mode === 'documentado' ? '_documentado' : '';
-    const filename = `CV_David_Lezcano_${new Date().toISOString().slice(0, 10)}${modeLabel}.pdf`;
+    const filename = 'CV_David_Lezcano_' + new Date().toISOString().slice(0, 10) + modeLabel + '.pdf';
 
     return new NextResponse(new Uint8Array(finalBuffer), {
       status: 200,
       headers: {
         'Content-Type': 'application/pdf',
-        'Content-Disposition': `attachment; filename="${filename}"`,
+        'Content-Disposition': 'attachment; filename="' + filename + '"',
         'Content-Length': finalBuffer.length.toString(),
       },
     });
