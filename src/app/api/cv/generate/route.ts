@@ -278,14 +278,27 @@ export async function POST(request: NextRequest): Promise<NextResponse> {
     // === EDUCACION ===
     if (educacion && educacion.length > 0) {
       drawSectionTitle(ctx, 'Formacion');
-      for (const edu of educacion) {
+      const grados = educacion.filter((e: { tipo?: string }) => e.tipo !== 'curso');
+      const cursos = educacion.filter((e: { tipo?: string }) => e.tipo === 'curso');
+      for (const edu of grados) {
         checkNewPage(ctx, 30);
         drawText(ctx, edu.fecha_inicio + ' - ' + edu.fecha_fin, { size: 10, font: fontBold });
         drawText(ctx, edu.institucion, { size: 10, font: fontBold });
         drawText(ctx, edu.titulo, { size: 10, color: GRAY });
         ctx.y -= 8;
       }
+      if (cursos.length > 0) {
+        ctx.y -= 6;
+        for (const cur of cursos) {
+          checkNewPage(ctx, 14);
+          ctx.page.drawText(cur.fecha_inicio, { x: MARGIN_LEFT, y: ctx.y, size: 9, font, color: BLACK });
+          ctx.page.drawText(cur.institucion, { x: MARGIN_LEFT + 100, y: ctx.y, size: 9, font, color: BLACK });
+          ctx.page.drawText(cur.titulo, { x: MARGIN_LEFT + 240, y: ctx.y, size: 9, font: fontBold, color: BLACK });
+          ctx.y -= 13;
+        }
+      }
     }
+
 
     // === MODO DOCUMENTADO ===
     if (mode === 'documentado') {
