@@ -125,6 +125,14 @@ export async function POST(request: NextRequest): Promise<NextResponse> {
     const { data: educacion } = await supabase.from('educacion').select('*').eq('visible', true).order('orden');
     const { data: certificaciones } = await supabase.from('certificaciones').select('*').eq('visible', true).order('orden');
 
+    // Ordenar experiencias: Actualidad primero, luego por fecha descendente
+    const sortedExp = (experiencias || []).sort((a, b) => {
+      if (a.fecha_fin === 'Actualidad' && b.fecha_fin !== 'Actualidad') return -1;
+      if (b.fecha_fin === 'Actualidad' && a.fecha_fin !== 'Actualidad') return 1;
+      const parseDate = (d: string) => { const [m, y] = d.split('/'); return parseInt(y) * 12 + parseInt(m); };
+      return parseDate(b.fecha_inicio) - parseDate(a.fecha_inicio);
+    });
+
     const doc = await PDFDocument.create();
     const font = await doc.embedFont(StandardFonts.Helvetica);
     const fontBold = await doc.embedFont(StandardFonts.HelveticaBold);
@@ -159,24 +167,31 @@ export async function POST(request: NextRequest): Promise<NextResponse> {
       }
     }
 
-    drawText(ctx, perfil.telefono + '  |  ' + perfil.email, { size: 9, color: GRAY });
+    // Contacto
+    drawText(ctx, perfil.telefono + '  |  ' + perfil.email, { size: 9, color: GRAY, maxWidth: CONTENT_WIDTH - 90 });
     ctx.y -= 2;
     if (perfil.linkedin_url) {
-      drawText(ctx, perfil.linkedin_url, { size: 8, color: BLUE });
+      drawText(ctx, perfil.linkedin_url, { size: 8, color: BLUE, maxWidth: CONTENT_WIDTH - 90 });
     }
     ctx.y -= 14;
 
-    drawText(ctx, perfil.nombre_completo, { size: 18, font: fontBold });
+    // Nombre
+    drawText(ctx, perfil.nombre_completo, { size: 18, font: fontBold, maxWidth: CONTENT_WIDTH - 90 });
     ctx.y -= 4;
 
+    // Linea azul
     drawLine(ctx);
     ctx.y -= 6;
 
-    drawText(ctx, perfil.titulo_profesional + '.', { size: 10, font: fontBold });
+    // Titulo profesional
+    drawText(ctx, perfil.titulo_profesional + '.', { size: 10, font: fontBold, maxWidth: CONTENT_WIDTH - 90 });
     ctx.y -= 4;
+
+    // Resumen (ya va debajo de la foto, ancho completo)
     drawText(ctx, perfil.resumen, { size: 10, color: GRAY });
     ctx.y -= 8;
 
+    // Certificaciones principales
     drawText(ctx, 'Certificaciones principales en:', { size: 10 });
     ctx.y -= 2;
     if (certificaciones) {
@@ -190,43 +205,41 @@ export async function POST(request: NextRequest): Promise<NextResponse> {
     // === EXPERIENCIA ===
     drawSectionTitle(ctx, 'Experiencia');
 
-    if (experiencias) {
-      for (const exp of experiencias) {
-        checkNewPage(ctx, 60);
-        drawText(ctx, exp.fecha_inicio + ' - ' + exp.fecha_fin, { size: 10, font: fontBold });
-        drawText(ctx, exp.institucion, { size: 10, font: fontBold });
-        drawText(ctx, exp.cargo, { size: 10, font: fontBold });
-        ctx.y -= 2;
+    for (const exp of sortedExp) {
+      checkNewPage(ctx, 60);
+      drawText(ctx, exp.fecha_inicio + ' - ' + exp.fecha_fin, { size: 10, font: fontBold });
+      drawText(ctx, exp.institucion, { size: 10, font: fontBold });
+      drawText(ctx, exp.cargo, { size: 10, font: fontBold });
+      ctx.y -= 2;
 
-        const funciones = Array.isArray(exp.funciones) ? exp.funciones : [];
-        if (funciones.length > 0) {
-          drawText(ctx, 'Funciones asignadas:', { size: 9, font: fontBold });
-          ctx.y -= 1;
-          for (const f of funciones) {
-            drawText(ctx, '>  ' + f, { size: 9, indent: 14, color: GRAY });
-          }
+      const funciones = Array.isArray(exp.funciones) ? exp.funciones : [];
+      if (funciones.length > 0) {
+        drawText(ctx, 'Funciones asignadas:', { size: 9, font: fontBold });
+        ctx.y -= 1;
+        for (const f of funciones) {
+          drawText(ctx, '>  ' + f, { size: 9, indent: 14, color: GRAY });
         }
-
-        const logros = Array.isArray(exp.logros) ? exp.logros : [];
-        if (logros.length > 0) {
-          ctx.y -= 4;
-          drawText(ctx, 'Logros:', { size: 9, font: fontBold, indent: 14 });
-          for (const l of logros) {
-            drawText(ctx, l, { size: 9, indent: 20, color: GRAY });
-          }
-        }
-
-        const proyectos = Array.isArray(exp.proyectos) ? exp.proyectos : [];
-        if (proyectos.length > 0) {
-          ctx.y -= 4;
-          drawText(ctx, 'Proyectos principales:', { size: 9, font: fontBold, indent: 14 });
-          proyectos.forEach((p: string, i: number) => {
-            drawText(ctx, (i + 1) + '. ' + p, { size: 9, indent: 20, color: GRAY });
-          });
-        }
-
-        ctx.y -= 12;
       }
+
+      const logros = Array.isArray(exp.logros) ? exp.logros : [];
+      if (logros.length > 0) {
+        ctx.y -= 4;
+        drawText(ctx, 'Logros:', { size: 9, font: fontBold, indent: 14 });
+        for (const l of logros) {
+          drawText(ctx, l, { size: 9, indent: 20, color: GRAY });
+        }
+      }
+
+      const proyectos = Array.isArray(exp.proyectos) ? exp.proyectos : [];
+      if (proyectos.length > 0) {
+        ctx.y -= 4;
+        drawText(ctx, 'Proyectos principales:', { size: 9, font: fontBold, indent: 14 });
+        proyectos.forEach((p: string, i: number) => {
+          drawText(ctx, (i + 1) + '. ' + p, { size: 9, indent: 20, color: GRAY });
+        });
+      }
+
+      ctx.y -= 12;
     }
 
     // === EDUCACION ===
@@ -281,6 +294,7 @@ export async function POST(request: NextRequest): Promise<NextResponse> {
         } catch { continue; }
       }
 
+      // Watermark en paginas de certificados
       if (empresa && empresa.trim()) {
         const wFont = await doc.embedFont(StandardFonts.Helvetica);
         const pages = doc.getPages();
@@ -301,6 +315,7 @@ export async function POST(request: NextRequest): Promise<NextResponse> {
       }
     }
 
+    // Guardar y retornar
     const pdfBytes = await doc.save();
     const finalBuffer = Buffer.from(pdfBytes);
     const modeLabel = mode === 'documentado' ? '_documentado' : '';
