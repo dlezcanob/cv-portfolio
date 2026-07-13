@@ -8,6 +8,8 @@ import { createServerSupabaseClient } from '@/lib/supabase/server';
 const BLUE = rgb(0.267, 0.447, 0.769);
 const BLACK = rgb(0, 0, 0);
 const GRAY = rgb(0.35, 0.35, 0.35);
+const WHITE = rgb(1, 1, 1);
+const LINKEDIN_BLUE = rgb(0, 0.467, 0.706);
 const PAGE_WIDTH = 595.28;
 const PAGE_HEIGHT = 841.89;
 const MARGIN_LEFT = 72;
@@ -95,6 +97,15 @@ function drawSectionTitle(ctx: DrawContext, title: string) {
   ctx.y -= 18;
 }
 
+// Dibuja un circulo con letra adentro (simula icono)
+function drawIcon(page: PDFPage, x: number, y: number, letter: string, bgColor: ReturnType<typeof rgb>, font: PDFFont) {
+  const r = 7;
+  page.drawCircle({ x: x + r, y: y, size: r, color: bgColor });
+  const letterWidth = font.widthOfTextAtSize(letter, 7);
+  page.drawText(letter, { x: x + r - letterWidth / 2, y: y - 3, size: 7, font, color: WHITE });
+  return x + r * 2 + 6; // retorna posicion X despues del icono
+}
+
 export async function POST(request: NextRequest): Promise<NextResponse> {
   try {
     let mode = 'simple';
@@ -129,15 +140,15 @@ export async function POST(request: NextRequest): Promise<NextResponse> {
     const ctx: DrawContext = { doc, page: null as unknown as PDFPage, y: 0, font, fontBold };
     newPage(ctx);
 
-    // === HEADER - Dibujado manual con posiciones fijas ===
+    // === HEADER ===
     const headerTop = PAGE_HEIGHT - MARGIN_TOP;
     const textLeftX = MARGIN_LEFT;
-    const fotoW = 75;
-    const fotoH = 95;
+    const fotoW = 80;
+    const fotoH = 100;
     const fotoX = PAGE_WIDTH - MARGIN_RIGHT - fotoW;
     const fotoY = headerTop - fotoH;
 
-    // Foto (si existe)
+    // Foto (si existe) - arriba a la derecha
     if (perfil.foto_url) {
       try {
         const fotoRes = await fetch(perfil.foto_url);
@@ -157,40 +168,47 @@ export async function POST(request: NextRequest): Promise<NextResponse> {
       } catch {}
     }
 
-    // Contacto (posicion fija a la izquierda)
-    let yPos = headerTop - 12;
+    // Contacto con iconos circulares
+    let yPos = headerTop - 14;
 
-    ctx.page.drawText('(T) ' + perfil.telefono, { x: textLeftX, y: yPos, size: 9, font, color: GRAY });
-    yPos -= 14;
+    // Icono celular (circulo verde con C)
+    let afterIcon = drawIcon(ctx.page, textLeftX, yPos, 'C', rgb(0.2, 0.6, 0.4), fontBold);
+    ctx.page.drawText(perfil.telefono, { x: afterIcon, y: yPos - 3, size: 9, font, color: BLACK });
+    yPos -= 18;
 
-    ctx.page.drawText('(E) ' + perfil.email, { x: textLeftX, y: yPos, size: 9, font, color: BLUE });
-    yPos -= 14;
+    // Icono email (circulo azul con @)
+    afterIcon = drawIcon(ctx.page, textLeftX, yPos, '@', BLUE, font);
+    ctx.page.drawText(perfil.email, { x: afterIcon, y: yPos - 3, size: 9, font, color: BLUE });
+    yPos -= 18;
 
+    // Icono LinkedIn (circulo LinkedIn azul con in)
     if (perfil.linkedin_url) {
-      ctx.page.drawText('(in) ' + perfil.linkedin_url, { x: textLeftX, y: yPos, size: 8, font, color: BLUE });
-      yPos -= 14;
+      afterIcon = drawIcon(ctx.page, textLeftX, yPos, 'in', LINKEDIN_BLUE, fontBold);
+      ctx.page.drawText(perfil.linkedin_url, { x: afterIcon, y: yPos - 3, size: 7, font, color: BLUE });
+      yPos -= 18;
     }
 
-    yPos -= 10;
+    yPos -= 8;
 
-    // Nombre grande
-    ctx.page.drawText(perfil.nombre_completo, { x: textLeftX, y: yPos, size: 18, font: fontBold, color: BLACK });
-    yPos -= 26;
+    // Nombre (grande, bold, como el original)
+    ctx.page.drawText(perfil.nombre_completo, { x: textLeftX, y: yPos, size: 20, font: fontBold, color: BLACK });
+    yPos -= 30;
 
-    // Linea azul (NO corta la foto - solo hasta donde empieza la foto)
+    // Linea azul - termina ANTES de la foto (no la cruza)
+    const lineEndX = fotoX - 10;
     ctx.page.drawLine({
       start: { x: MARGIN_LEFT, y: yPos },
-      end: { x: PAGE_WIDTH - MARGIN_RIGHT, y: yPos },
-      thickness: 1.5,
+      end: { x: lineEndX, y: yPos },
+      thickness: 2,
       color: BLUE,
     });
-    yPos -= 16;
+    yPos -= 18;
 
-    // Ahora posicionar ctx.y debajo de la foto y la linea azul
-    const belowFoto = fotoY - 10;
+    // Posicionar debajo de la foto si la foto es mas larga
+    const belowFoto = fotoY - 14;
     ctx.y = Math.min(yPos, belowFoto);
 
-    // === Titulo profesional + Resumen (ancho completo, ya debajo de la foto) ===
+    // === Titulo profesional + Resumen ===
     drawText(ctx, perfil.titulo_profesional + '.', { size: 10, font: fontBold });
     ctx.y -= 4;
     drawText(ctx, perfil.resumen, { size: 10, color: GRAY });
