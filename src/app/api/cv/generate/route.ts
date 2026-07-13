@@ -133,6 +133,32 @@ export async function POST(request: NextRequest): Promise<NextResponse> {
     newPage(ctx);
 
     // === HEADER ===
+    // Foto (si existe) - arriba a la derecha
+    if (perfil.foto_url) {
+      try {
+        const fotoRes = await fetch(perfil.foto_url);
+        if (fotoRes.ok) {
+          const fotoBuffer = await fotoRes.arrayBuffer();
+          const contentType = fotoRes.headers.get('content-type') || '';
+          const fotoImage = contentType.includes('png')
+            ? await doc.embedPng(fotoBuffer)
+            : await doc.embedJpg(fotoBuffer);
+          const fotoDims = fotoImage.scale(1);
+          const fotoScale = Math.min(75 / fotoDims.width, 100 / fotoDims.height);
+          const fotoW = fotoDims.width * fotoScale;
+          const fotoH = fotoDims.height * fotoScale;
+          ctx.page.drawImage(fotoImage, {
+            x: PAGE_WIDTH - MARGIN_RIGHT - fotoW,
+            y: PAGE_HEIGHT - MARGIN_TOP - fotoH,
+            width: fotoW,
+            height: fotoH,
+          });
+        }
+      } catch {
+        // Si falla la foto, continuar sin ella
+      }
+    }
+
     drawText(ctx, perfil.telefono + '  |  ' + perfil.email, { size: 9, color: GRAY });
     ctx.y -= 2;
     if (perfil.linkedin_url) {
