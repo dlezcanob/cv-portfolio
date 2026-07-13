@@ -232,8 +232,10 @@ export async function POST(request: NextRequest): Promise<NextResponse> {
       if (funciones.length > 0) {
         drawText(ctx, 'Funciones asignadas:', { size: 9, font: fontBold });
         ctx.y -= 1;
-        for (const f of funciones) {
-          drawText(ctx, '>  ' + f, { size: 9, indent: 30, color: GRAY });
+		for (const f of funciones) {
+          checkNewPage(ctx, 14);
+          ctx.page.drawText('>', { x: MARGIN_LEFT + 30, y: ctx.y, size: 9, font: ctx.font, color: GRAY });
+          drawText(ctx, f, { size: 9, indent: 42, color: GRAY });
         }
       }
 
