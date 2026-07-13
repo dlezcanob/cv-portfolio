@@ -79,6 +79,7 @@ export default function PerfilPage() {
           <label className="block text-sm font-medium text-gray-700 mb-2">Foto profesional</label>
           <div className="flex items-center gap-4">
             {fotoUrl ? (
+			 {/* eslint-disable-next-line @next/next/no-img-element */}
               <img src={fotoUrl} alt="Foto actual" className="w-24 h-32 object-cover rounded-lg border border-gray-200" />
             ) : (
               <div className="w-24 h-32 bg-gray-100 rounded-lg border border-dashed border-gray-300 flex items-center justify-center text-gray-400 text-xs">Sin foto</div>

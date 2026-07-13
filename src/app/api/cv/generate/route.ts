@@ -136,7 +136,6 @@ export async function POST(request: NextRequest): Promise<NextResponse> {
     const fotoH = 95;
     const fotoX = PAGE_WIDTH - MARGIN_RIGHT - fotoW;
     const fotoY = headerTop - fotoH;
-    const textMaxW = CONTENT_WIDTH - fotoW - 20;
 
     // Foto (si existe)
     if (perfil.foto_url) {
