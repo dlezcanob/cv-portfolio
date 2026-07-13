@@ -73,17 +73,6 @@ function drawText(ctx: DrawContext, text: string, options: { size?: number; font
   }
 }
 
-function drawLine(ctx: DrawContext) {
-  checkNewPage(ctx, 10);
-  ctx.page.drawLine({
-    start: { x: MARGIN_LEFT, y: ctx.y },
-    end: { x: PAGE_WIDTH - MARGIN_RIGHT, y: ctx.y },
-    thickness: 1.5,
-    color: BLUE,
-  });
-  ctx.y -= 12;
-}
-
 function drawSectionTitle(ctx: DrawContext, title: string) {
   ctx.y -= 10;
   checkNewPage(ctx, 30);
@@ -140,8 +129,16 @@ export async function POST(request: NextRequest): Promise<NextResponse> {
     const ctx: DrawContext = { doc, page: null as unknown as PDFPage, y: 0, font, fontBold };
     newPage(ctx);
 
-    // === HEADER ===
-    // Foto (si existe) - arriba a la derecha
+    // === HEADER - Dibujado manual con posiciones fijas ===
+    const headerTop = PAGE_HEIGHT - MARGIN_TOP;
+    const textLeftX = MARGIN_LEFT;
+    const fotoW = 75;
+    const fotoH = 95;
+    const fotoX = PAGE_WIDTH - MARGIN_RIGHT - fotoW;
+    const fotoY = headerTop - fotoH;
+    const textMaxW = CONTENT_WIDTH - fotoW - 20;
+
+    // Foto (si existe)
     if (perfil.foto_url) {
       try {
         const fotoRes = await fetch(perfil.foto_url);
@@ -151,43 +148,52 @@ export async function POST(request: NextRequest): Promise<NextResponse> {
           const fotoImage = contentType.includes('png')
             ? await doc.embedPng(fotoBuffer)
             : await doc.embedJpg(fotoBuffer);
-          const fotoDims = fotoImage.scale(1);
-          const fotoScale = Math.min(75 / fotoDims.width, 100 / fotoDims.height);
-          const fotoW = fotoDims.width * fotoScale;
-          const fotoH = fotoDims.height * fotoScale;
           ctx.page.drawImage(fotoImage, {
-            x: PAGE_WIDTH - MARGIN_RIGHT - fotoW,
-            y: PAGE_HEIGHT - MARGIN_TOP - fotoH,
+            x: fotoX,
+            y: fotoY,
             width: fotoW,
             height: fotoH,
           });
         }
-      } catch {
-        // Si falla la foto, continuar sin ella
-      }
+      } catch {}
     }
 
-    // Contacto
-    drawText(ctx, perfil.telefono + '  |  ' + perfil.email, { size: 9, color: GRAY, maxWidth: CONTENT_WIDTH - 90 });
-    ctx.y -= 2;
+    // Contacto (posicion fija a la izquierda)
+    let yPos = headerTop - 12;
+
+    ctx.page.drawText('(T) ' + perfil.telefono, { x: textLeftX, y: yPos, size: 9, font, color: GRAY });
+    yPos -= 14;
+
+    ctx.page.drawText('(E) ' + perfil.email, { x: textLeftX, y: yPos, size: 9, font, color: BLUE });
+    yPos -= 14;
+
     if (perfil.linkedin_url) {
-      drawText(ctx, perfil.linkedin_url, { size: 8, color: BLUE, maxWidth: CONTENT_WIDTH - 90 });
+      ctx.page.drawText('(in) ' + perfil.linkedin_url, { x: textLeftX, y: yPos, size: 8, font, color: BLUE });
+      yPos -= 14;
     }
-    ctx.y -= 14;
 
-    // Nombre
-    drawText(ctx, perfil.nombre_completo, { size: 18, font: fontBold, maxWidth: CONTENT_WIDTH - 90 });
+    yPos -= 10;
+
+    // Nombre grande
+    ctx.page.drawText(perfil.nombre_completo, { x: textLeftX, y: yPos, size: 18, font: fontBold, color: BLACK });
+    yPos -= 26;
+
+    // Linea azul (NO corta la foto - solo hasta donde empieza la foto)
+    ctx.page.drawLine({
+      start: { x: MARGIN_LEFT, y: yPos },
+      end: { x: PAGE_WIDTH - MARGIN_RIGHT, y: yPos },
+      thickness: 1.5,
+      color: BLUE,
+    });
+    yPos -= 16;
+
+    // Ahora posicionar ctx.y debajo de la foto y la linea azul
+    const belowFoto = fotoY - 10;
+    ctx.y = Math.min(yPos, belowFoto);
+
+    // === Titulo profesional + Resumen (ancho completo, ya debajo de la foto) ===
+    drawText(ctx, perfil.titulo_profesional + '.', { size: 10, font: fontBold });
     ctx.y -= 4;
-
-    // Linea azul
-    drawLine(ctx);
-    ctx.y -= 6;
-
-    // Titulo profesional
-    drawText(ctx, perfil.titulo_profesional + '.', { size: 10, font: fontBold, maxWidth: CONTENT_WIDTH - 90 });
-    ctx.y -= 4;
-
-    // Resumen (ya va debajo de la foto, ancho completo)
     drawText(ctx, perfil.resumen, { size: 10, color: GRAY });
     ctx.y -= 8;
 
@@ -294,7 +300,7 @@ export async function POST(request: NextRequest): Promise<NextResponse> {
         } catch { continue; }
       }
 
-      // Watermark en paginas de certificados
+      // Watermark
       if (empresa && empresa.trim()) {
         const wFont = await doc.embedFont(StandardFonts.Helvetica);
         const pages = doc.getPages();
