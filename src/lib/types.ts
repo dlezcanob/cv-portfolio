@@ -41,6 +41,7 @@ export interface Educacion {
   fecha_inicio: string
   fecha_fin: string
   archivo_url: string | null
+  tipo: string
   orden: number
   visible: boolean
   created_at: string
