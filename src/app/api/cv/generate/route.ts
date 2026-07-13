@@ -97,13 +97,12 @@ function drawSectionTitle(ctx: DrawContext, title: string) {
   ctx.y -= 18;
 }
 
-// Dibuja un circulo con letra adentro (simula icono)
 function drawIcon(page: PDFPage, x: number, y: number, letter: string, bgColor: ReturnType<typeof rgb>, font: PDFFont) {
   const r = 7;
   page.drawCircle({ x: x + r, y: y, size: r, color: bgColor });
   const letterWidth = font.widthOfTextAtSize(letter, 7);
   page.drawText(letter, { x: x + r - letterWidth / 2, y: y - 3, size: 7, font, color: WHITE });
-  return x + r * 2 + 6; // retorna posicion X despues del icono
+  return x + r * 2 + 6;
 }
 
 export async function POST(request: NextRequest): Promise<NextResponse> {
@@ -125,7 +124,6 @@ export async function POST(request: NextRequest): Promise<NextResponse> {
     const { data: educacion } = await supabase.from('educacion').select('*').eq('visible', true).order('orden');
     const { data: certificaciones } = await supabase.from('certificaciones').select('*').eq('visible', true).order('orden');
 
-    // Ordenar experiencias: Actualidad primero, luego por fecha descendente
     const sortedExp = (experiencias || []).sort((a, b) => {
       if (a.fecha_fin === 'Actualidad' && b.fecha_fin !== 'Actualidad') return -1;
       if (b.fecha_fin === 'Actualidad' && a.fecha_fin !== 'Actualidad') return 1;
@@ -148,7 +146,6 @@ export async function POST(request: NextRequest): Promise<NextResponse> {
     const fotoX = PAGE_WIDTH - MARGIN_RIGHT - fotoW;
     const fotoY = headerTop - fotoH;
 
-    // Foto (si existe) - arriba a la derecha
     if (perfil.foto_url) {
       try {
         const fotoRes = await fetch(perfil.foto_url);
@@ -168,33 +165,27 @@ export async function POST(request: NextRequest): Promise<NextResponse> {
       } catch {}
     }
 
-    // Contacto con iconos circulares
     let yPos = headerTop - 14;
 
-    // Icono celular (circulo verde con C)
     let afterIcon = drawIcon(ctx.page, textLeftX, yPos, 'C', rgb(0.2, 0.6, 0.4), fontBold);
     ctx.page.drawText(perfil.telefono, { x: afterIcon, y: yPos - 3, size: 9, font, color: BLACK });
     yPos -= 18;
 
-    // Icono email (circulo azul con @)
     afterIcon = drawIcon(ctx.page, textLeftX, yPos, '@', BLUE, font);
     ctx.page.drawText(perfil.email, { x: afterIcon, y: yPos - 3, size: 9, font, color: BLUE });
     yPos -= 18;
 
-    // Icono LinkedIn (circulo LinkedIn azul con in)
     if (perfil.linkedin_url) {
       afterIcon = drawIcon(ctx.page, textLeftX, yPos, 'in', LINKEDIN_BLUE, fontBold);
       ctx.page.drawText(perfil.linkedin_url, { x: afterIcon, y: yPos - 3, size: 7, font, color: BLUE });
       yPos -= 18;
     }
 
-    yPos -= 8;
+    yPos -= 12;
 
-    // Nombre (grande, bold, como el original)
     ctx.page.drawText(perfil.nombre_completo, { x: textLeftX, y: yPos, size: 20, font: fontBold, color: BLACK });
     yPos -= 30;
 
-    // Linea azul - termina ANTES de la foto (no la cruza)
     const lineEndX = fotoX - 10;
     ctx.page.drawLine({
       start: { x: MARGIN_LEFT, y: yPos },
@@ -204,17 +195,15 @@ export async function POST(request: NextRequest): Promise<NextResponse> {
     });
     yPos -= 18;
 
-    // Posicionar debajo de la foto si la foto es mas larga
     const belowFoto = fotoY - 14;
     ctx.y = Math.min(yPos, belowFoto);
 
-    // === Titulo profesional + Resumen ===
+    // === Titulo + Resumen ===
     drawText(ctx, perfil.titulo_profesional + '.', { size: 10, font: fontBold });
     ctx.y -= 4;
     drawText(ctx, perfil.resumen, { size: 10, color: GRAY });
     ctx.y -= 8;
 
-    // Certificaciones principales
     drawText(ctx, 'Certificaciones principales en:', { size: 10 });
     ctx.y -= 2;
     if (certificaciones) {
@@ -250,6 +239,21 @@ export async function POST(request: NextRequest): Promise<NextResponse> {
         drawText(ctx, 'Logros:', { size: 9, font: fontBold, indent: 14 });
         for (const l of logros) {
           drawText(ctx, l, { size: 9, indent: 20, color: GRAY });
+        }
+      }
+
+      const reconocimientos = Array.isArray(exp.reconocimientos) ? exp.reconocimientos : [];
+      if (reconocimientos.length > 0) {
+        ctx.y -= 4;
+        drawText(ctx, 'Reconocimientos:', { size: 9, font: fontBold, indent: 14 });
+        for (const r of reconocimientos) {
+          const rObj = r as { titulo: string; url?: string };
+          if (rObj.url) {
+            drawText(ctx, rObj.titulo, { size: 9, indent: 20, color: GRAY });
+            drawText(ctx, rObj.url, { size: 8, indent: 20, color: BLUE });
+          } else {
+            drawText(ctx, rObj.titulo, { size: 9, indent: 20, color: GRAY });
+          }
         }
       }
 
@@ -302,63 +306,4 @@ export async function POST(request: NextRequest): Promise<NextResponse> {
           if (contentType.includes('pdf')) {
             const sourceDoc = await PDFDocument.load(buffer);
             const pages = await doc.copyPages(sourceDoc, sourceDoc.getPageIndices());
-            for (const page of pages) { doc.addPage(page); }
-          } else if (contentType.includes('image')) {
-            const page = doc.addPage([PAGE_WIDTH, PAGE_HEIGHT]);
-            const image = contentType.includes('png')
-              ? await doc.embedPng(buffer)
-              : await doc.embedJpg(buffer);
-            const dims = image.scale(1);
-            const scale = Math.min(500 / dims.width, 720 / dims.height, 1);
-            const w = dims.width * scale;
-            const h = dims.height * scale;
-            page.drawImage(image, { x: (PAGE_WIDTH - w) / 2, y: (PAGE_HEIGHT - h) / 2, width: w, height: h });
-          }
-        } catch { continue; }
-      }
-
-      // Watermark
-      if (empresa && empresa.trim()) {
-        const wFont = await doc.embedFont(StandardFonts.Helvetica);
-        const pages = doc.getPages();
-        const watermarkText = 'Exclusivo para evaluacion en ' + empresa;
-        for (let i = cvPageCount; i < pages.length; i++) {
-          const pg = pages[i];
-          const { width, height } = pg.getSize();
-          pg.drawText(watermarkText, {
-            x: width / 2 - 170,
-            y: height / 2,
-            size: 30,
-            font: wFont,
-            color: rgb(0.7, 0.7, 0.7),
-            opacity: 0.12,
-            rotate: degrees(45),
-          });
-        }
-      }
-    }
-
-    // Guardar y retornar
-    const pdfBytes = await doc.save();
-    const finalBuffer = Buffer.from(pdfBytes);
-    const modeLabel = mode === 'documentado' ? '_documentado' : '';
-    const filename = 'CV_David_Lezcano_' + new Date().toISOString().slice(0, 10) + modeLabel + '.pdf';
-
-    return new NextResponse(new Uint8Array(finalBuffer), {
-      status: 200,
-      headers: {
-        'Content-Type': 'application/pdf',
-        'Content-Disposition': 'attachment; filename="' + filename + '"',
-        'Content-Length': finalBuffer.length.toString(),
-      },
-    });
-  } catch (error) {
-    console.error('[CV Generator]', error);
-    return NextResponse.json({ error: 'Error: ' + (error instanceof Error ? error.message : 'desconocido') }, { status: 500 });
-  }
-}
-
-export async function GET(): Promise<NextResponse> {
-  const url = new URL('/api/cv/generate', process.env.NEXT_PUBLIC_SITE_URL || 'http://localhost:3000');
-  return POST(new NextRequest(url, { method: 'POST', body: JSON.stringify({ mode: 'simple' }) }));
-}
+            for (const page of pages) { doc

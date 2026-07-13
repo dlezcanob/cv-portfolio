@@ -20,6 +20,7 @@ export default function ExperienciasPage() {
     cargo: '',
     funciones: '',
     logros: '',
+    reconocimientos: '',
   })
 
   useEffect(() => {
@@ -33,11 +34,9 @@ export default function ExperienciasPage() {
       .select('*')
       .order('orden', { ascending: true })
 
-    // Ordenar: "Actualidad" primero, luego por fecha_inicio descendente
     const sorted = (data || []).sort((a, b) => {
       if (a.fecha_fin === 'Actualidad' && b.fecha_fin !== 'Actualidad') return -1
       if (b.fecha_fin === 'Actualidad' && a.fecha_fin !== 'Actualidad') return 1
-      // Comparar por fecha_inicio descendente (MM/YYYY)
       const parseDate = (d: string) => {
         const [m, y] = d.split('/')
         return parseInt(y) * 12 + parseInt(m)
@@ -50,7 +49,7 @@ export default function ExperienciasPage() {
   }
 
   function resetForm() {
-    setForm({ fecha_inicio: '', fecha_fin: 'Actualidad', institucion: '', cargo: '', funciones: '', logros: '' })
+    setForm({ fecha_inicio: '', fecha_fin: 'Actualidad', institucion: '', cargo: '', funciones: '', logros: '', reconocimientos: '' })
     setEditingId(null)
     setShowForm(false)
   }
@@ -63,6 +62,7 @@ export default function ExperienciasPage() {
       cargo: exp.cargo,
       funciones: Array.isArray(exp.funciones) ? exp.funciones.join('\n') : '',
       logros: Array.isArray(exp.logros) ? exp.logros.join('\n') : '',
+      reconocimientos: Array.isArray(exp.reconocimientos) ? exp.reconocimientos.map((r: { titulo: string; url?: string }) => r.url ? r.titulo + ' - ' + r.url : r.titulo).join('\n') : '',
     })
     setEditingId(exp.id)
     setShowForm(true)
@@ -72,6 +72,10 @@ export default function ExperienciasPage() {
     e.preventDefault()
     const funciones = form.funciones.split('\n').filter((f) => f.trim())
     const logrosArr = form.logros.split('\n').filter((l) => l.trim())
+    const reconocimientosArr = form.reconocimientos.split('\n').filter((r) => r.trim()).map((r) => {
+      const parts = r.split(' - ')
+      return parts.length > 1 ? { titulo: parts[0].trim(), url: parts.slice(1).join(' - ').trim() } : { titulo: r.trim() }
+    })
 
     const record = {
       fecha_inicio: form.fecha_inicio,
@@ -80,6 +84,7 @@ export default function ExperienciasPage() {
       cargo: form.cargo,
       funciones,
       logros: logrosArr.length > 0 ? logrosArr : null,
+      reconocimientos: reconocimientosArr.length > 0 ? reconocimientosArr : null,
       orden: experiencias.length,
     }
 
@@ -167,7 +172,13 @@ export default function ExperienciasPage() {
           <div>
             <label className="block text-sm font-medium text-gray-700 mb-1">Logros (opcional, uno por linea)</label>
             <textarea value={form.logros} onChange={(e) => setForm({ ...form, logros: e.target.value })} rows={3} placeholder="Ej: Implementacion del Sistema de Gestion Documental" className="w-full px-3 py-2 border border-gray-300 rounded-md text-sm focus:ring-2 focus:ring-[#1B4F72] focus:outline-none" />
-            <p className="text-xs text-gray-400 mt-1">Si no hay logros, deja este campo vacio. No aparecera en el CV.</p>
+            <p className="text-xs text-gray-400 mt-1">Si no hay logros, deja vacio. No aparecera en el CV.</p>
+          </div>
+
+          <div>
+            <label className="block text-sm font-medium text-gray-700 mb-1">Reconocimientos (opcional, uno por linea)</label>
+            <textarea value={form.reconocimientos} onChange={(e) => setForm({ ...form, reconocimientos: e.target.value })} rows={3} placeholder="Ej: Caso de exito AWS - https://aws.amazon.com/es/partners/success/inaigem-itera/" className="w-full px-3 py-2 border border-gray-300 rounded-md text-sm focus:ring-2 focus:ring-[#1B4F72] focus:outline-none" />
+            <p className="text-xs text-gray-400 mt-1">Formato: Titulo - URL (la URL es opcional). Uno por linea.</p>
           </div>
 
           <div className="flex gap-3">
@@ -199,13 +210,13 @@ export default function ExperienciasPage() {
                     {!exp.visible && <span className="text-xs text-orange-500 bg-orange-50 px-2 py-0.5 rounded">Oculta del CV</span>}
                     {exp.archivo_url && <span className="text-xs text-green-600 bg-green-50 px-2 py-0.5 rounded">Sustento adjunto</span>}
                     {Array.isArray(exp.logros) && exp.logros.length > 0 && <span className="text-xs text-blue-600 bg-blue-50 px-2 py-0.5 rounded">{exp.logros.length} logros</span>}
+                    {Array.isArray(exp.reconocimientos) && exp.reconocimientos.length > 0 && <span className="text-xs text-purple-600 bg-purple-50 px-2 py-0.5 rounded">{exp.reconocimientos.length} reconocimientos</span>}
                   </div>
                   <p className="font-bold text-gray-800">{exp.cargo}</p>
                   <p className="text-sm text-[#2E86C1]">{exp.institucion}</p>
                   <p className="text-xs text-gray-500 mt-1">{Array.isArray(exp.funciones) ? exp.funciones.length : 0} funciones</p>
                 </div>
                 <div className="flex items-center gap-1">
-                  {/* Upload sustento */}
                   <label className={`p-2 hover:bg-blue-50 rounded cursor-pointer ${uploading ? 'opacity-50' : ''}`} title="Subir constancia/contrato PDF o imagen">
                     <Upload size={16} className="text-blue-500" />
                     <input
@@ -216,21 +227,17 @@ export default function ExperienciasPage() {
                       onChange={(e) => { if (e.target.files?.[0]) handleFileUpload(exp.id, e.target.files[0]) }}
                     />
                   </label>
-                  {/* Ver sustento */}
                   {exp.archivo_url && (
                     <a href={exp.archivo_url} target="_blank" rel="noopener noreferrer" className="p-2 hover:bg-gray-100 rounded" title="Ver sustento adjunto">
                       <FileText size={16} className="text-green-500" />
                     </a>
                   )}
-                  {/* Visible/ocultar */}
                   <button onClick={() => toggleVisible(exp)} className="p-2 hover:bg-gray-100 rounded" title={exp.visible ? 'Ocultar del CV' : 'Mostrar en CV'}>
                     {exp.visible ? <Eye size={16} className="text-gray-500" /> : <EyeOff size={16} className="text-orange-500" />}
                   </button>
-                  {/* Editar */}
                   <button onClick={() => startEdit(exp)} className="p-2 hover:bg-gray-100 rounded" title="Editar">
                     <Edit2 size={16} className="text-gray-500" />
                   </button>
-                  {/* Eliminar */}
                   <button onClick={() => handleDelete(exp.id)} className="p-2 hover:bg-red-50 rounded" title="Eliminar">
                     <Trash2 size={16} className="text-red-500" />
                   </button>
