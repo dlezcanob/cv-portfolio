@@ -1,4 +1,4 @@
-export const runtime = 'nodejs';
+﻿export const runtime = 'nodejs';
 export const maxDuration = 60;
 
 import { NextRequest, NextResponse } from 'next/server';
@@ -306,7 +306,7 @@ export async function POST(request: NextRequest): Promise<NextResponse> {
           if (contentType.includes('pdf')) {
             const sourceDoc = await PDFDocument.load(buffer);
             const pages = await doc.copyPages(sourceDoc, sourceDoc.getPageIndices());
-            for (const page of pages) { doc
+ for (const page of pages) { doc.addPage(page); }
           } else if (contentType.includes('image')) {
             const page = doc.addPage([PAGE_WIDTH, PAGE_HEIGHT]);
             const image = contentType.includes('png')
@@ -364,3 +364,4 @@ export async function GET(): Promise<NextResponse> {
   const url = new URL('/api/cv/generate', process.env.NEXT_PUBLIC_SITE_URL || 'http://localhost:3000');
   return POST(new NextRequest(url, { method: 'POST', body: JSON.stringify({ mode: 'simple' }) }));
 }
+
