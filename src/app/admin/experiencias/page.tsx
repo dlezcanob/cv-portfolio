@@ -1,4 +1,4 @@
-'use client'
+﻿'use client'
 
 import { useState, useEffect } from 'react'
 import { createClient } from '@/lib/supabase/client'
@@ -21,6 +21,7 @@ export default function ExperienciasPage() {
     funciones: '',
     logros: '',
     reconocimientos: '',
+    proyectos: '',
   })
 
   useEffect(() => {
@@ -49,7 +50,7 @@ export default function ExperienciasPage() {
   }
 
   function resetForm() {
-    setForm({ fecha_inicio: '', fecha_fin: 'Actualidad', institucion: '', cargo: '', funciones: '', logros: '', reconocimientos: '' })
+    setForm({ fecha_inicio: '', fecha_fin: 'Actualidad', institucion: '', cargo: '', funciones: '', logros: '', reconocimientos: '', proyectos: '' })
     setEditingId(null)
     setShowForm(false)
   }
@@ -63,6 +64,7 @@ export default function ExperienciasPage() {
       funciones: Array.isArray(exp.funciones) ? exp.funciones.join('\n') : '',
       logros: Array.isArray(exp.logros) ? exp.logros.join('\n') : '',
       reconocimientos: Array.isArray(exp.reconocimientos) ? exp.reconocimientos.map((r: { titulo: string; url?: string }) => r.url ? r.titulo + ' - ' + r.url : r.titulo).join('\n') : '',
+      proyectos: Array.isArray(exp.proyectos) ? exp.proyectos.join('\n') : '',
     })
     setEditingId(exp.id)
     setShowForm(true)
@@ -72,6 +74,7 @@ export default function ExperienciasPage() {
     e.preventDefault()
     const funciones = form.funciones.split('\n').filter((f) => f.trim())
     const logrosArr = form.logros.split('\n').filter((l) => l.trim())
+    const proyectosArr = form.proyectos.split('\n').filter((p) => p.trim())
     const reconocimientosArr = form.reconocimientos.split('\n').filter((r) => r.trim()).map((r) => {
       const parts = r.split(' - ')
       return parts.length > 1 ? { titulo: parts[0].trim(), url: parts.slice(1).join(' - ').trim() } : { titulo: r.trim() }
@@ -85,6 +88,7 @@ export default function ExperienciasPage() {
       funciones,
       logros: logrosArr.length > 0 ? logrosArr : null,
       reconocimientos: reconocimientosArr.length > 0 ? reconocimientosArr : null,
+      proyectos: proyectosArr.length > 0 ? proyectosArr : null,
       orden: experiencias.length,
     }
 
@@ -181,6 +185,12 @@ export default function ExperienciasPage() {
             <p className="text-xs text-gray-400 mt-1">Formato: Titulo - URL (la URL es opcional). Uno por linea.</p>
           </div>
 
+          <div>
+            <label className="block text-sm font-medium text-gray-700 mb-1">Proyectos principales (opcional, uno por linea)</label>
+            <textarea value={form.proyectos} onChange={(e) => setForm({ ...form, proyectos: e.target.value })} rows={3} placeholder="Ej: Implementacion del Modelo de Gestion Documental (DL 1310)" className="w-full px-3 py-2 border border-gray-300 rounded-md text-sm focus:ring-2 focus:ring-[#1B4F72] focus:outline-none" />
+            <p className="text-xs text-gray-400 mt-1">Se mostraran numerados en el CV. Deja vacio si no aplica.</p>
+          </div>
+
           <div className="flex gap-3">
             <button type="submit" className="flex items-center gap-2 bg-[#1B4F72] text-white px-4 py-2 rounded-md text-sm font-medium hover:bg-[#2E86C1] min-h-[44px]">
               <Save size={16} /> {editingId ? 'Actualizar' : 'Guardar'}
@@ -207,17 +217,18 @@ export default function ExperienciasPage() {
                 <div className="flex-1">
                   <div className="flex items-center gap-2 mb-1 flex-wrap">
                     <span className="text-xs text-gray-500 bg-gray-100 px-2 py-0.5 rounded">{exp.fecha_inicio} - {exp.fecha_fin}</span>
-                    {!exp.visible && <span className="text-xs text-orange-500 bg-orange-50 px-2 py-0.5 rounded">Oculta del CV</span>}
-                    {exp.archivo_url && <span className="text-xs text-green-600 bg-green-50 px-2 py-0.5 rounded">Sustento adjunto</span>}
+                    {!exp.visible && <span className="text-xs text-orange-500 bg-orange-50 px-2 py-0.5 rounded">Oculta</span>}
+                    {exp.archivo_url && <span className="text-xs text-green-600 bg-green-50 px-2 py-0.5 rounded">Sustento</span>}
                     {Array.isArray(exp.logros) && exp.logros.length > 0 && <span className="text-xs text-blue-600 bg-blue-50 px-2 py-0.5 rounded">{exp.logros.length} logros</span>}
-                    {Array.isArray(exp.reconocimientos) && exp.reconocimientos.length > 0 && <span className="text-xs text-purple-600 bg-purple-50 px-2 py-0.5 rounded">{exp.reconocimientos.length} reconocimientos</span>}
+                    {Array.isArray(exp.reconocimientos) && exp.reconocimientos.length > 0 && <span className="text-xs text-purple-600 bg-purple-50 px-2 py-0.5 rounded">{exp.reconocimientos.length} reconoc.</span>}
+                    {Array.isArray(exp.proyectos) && exp.proyectos.length > 0 && <span className="text-xs text-amber-600 bg-amber-50 px-2 py-0.5 rounded">{exp.proyectos.length} proyectos</span>}
                   </div>
                   <p className="font-bold text-gray-800">{exp.cargo}</p>
                   <p className="text-sm text-[#2E86C1]">{exp.institucion}</p>
                   <p className="text-xs text-gray-500 mt-1">{Array.isArray(exp.funciones) ? exp.funciones.length : 0} funciones</p>
                 </div>
                 <div className="flex items-center gap-1">
-                  <label className={`p-2 hover:bg-blue-50 rounded cursor-pointer ${uploading ? 'opacity-50' : ''}`} title="Subir constancia/contrato PDF o imagen">
+                  <label className={`p-2 hover:bg-blue-50 rounded cursor-pointer ${uploading ? 'opacity-50' : ''}`} title="Subir sustento PDF o imagen">
                     <Upload size={16} className="text-blue-500" />
                     <input
                       type="file"
@@ -228,7 +239,7 @@ export default function ExperienciasPage() {
                     />
                   </label>
                   {exp.archivo_url && (
-                    <a href={exp.archivo_url} target="_blank" rel="noopener noreferrer" className="p-2 hover:bg-gray-100 rounded" title="Ver sustento adjunto">
+                    <a href={exp.archivo_url} target="_blank" rel="noopener noreferrer" className="p-2 hover:bg-gray-100 rounded" title="Ver sustento">
                       <FileText size={16} className="text-green-500" />
                     </a>
                   )}
