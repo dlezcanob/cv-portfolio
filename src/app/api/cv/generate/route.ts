@@ -307,3 +307,60 @@ export async function POST(request: NextRequest): Promise<NextResponse> {
             const sourceDoc = await PDFDocument.load(buffer);
             const pages = await doc.copyPages(sourceDoc, sourceDoc.getPageIndices());
             for (const page of pages) { doc
+          } else if (contentType.includes('image')) {
+            const page = doc.addPage([PAGE_WIDTH, PAGE_HEIGHT]);
+            const image = contentType.includes('png')
+              ? await doc.embedPng(buffer)
+              : await doc.embedJpg(buffer);
+            const dims = image.scale(1);
+            const scale = Math.min(500 / dims.width, 720 / dims.height, 1);
+            const w = dims.width * scale;
+            const h = dims.height * scale;
+            page.drawImage(image, { x: (PAGE_WIDTH - w) / 2, y: (PAGE_HEIGHT - h) / 2, width: w, height: h });
+          }
+        } catch { continue; }
+      }
+
+      if (empresa && empresa.trim()) {
+        const wFont = await doc.embedFont(StandardFonts.Helvetica);
+        const pages = doc.getPages();
+        const watermarkText = 'Exclusivo para evaluacion en ' + empresa;
+        for (let i = cvPageCount; i < pages.length; i++) {
+          const pg = pages[i];
+          const { width, height } = pg.getSize();
+          pg.drawText(watermarkText, {
+            x: width / 2 - 170,
+            y: height / 2,
+            size: 30,
+            font: wFont,
+            color: rgb(0.7, 0.7, 0.7),
+            opacity: 0.12,
+            rotate: degrees(45),
+          });
+        }
+      }
+    }
+
+    const pdfBytes = await doc.save();
+    const finalBuffer = Buffer.from(pdfBytes);
+    const modeLabel = mode === 'documentado' ? '_documentado' : '';
+    const filename = 'CV_David_Lezcano_' + new Date().toISOString().slice(0, 10) + modeLabel + '.pdf';
+
+    return new NextResponse(new Uint8Array(finalBuffer), {
+      status: 200,
+      headers: {
+        'Content-Type': 'application/pdf',
+        'Content-Disposition': 'attachment; filename="' + filename + '"',
+        'Content-Length': finalBuffer.length.toString(),
+      },
+    });
+  } catch (error) {
+    console.error('[CV Generator]', error);
+    return NextResponse.json({ error: 'Error: ' + (error instanceof Error ? error.message : 'desconocido') }, { status: 500 });
+  }
+}
+
+export async function GET(): Promise<NextResponse> {
+  const url = new URL('/api/cv/generate', process.env.NEXT_PUBLIC_SITE_URL || 'http://localhost:3000');
+  return POST(new NextRequest(url, { method: 'POST', body: JSON.stringify({ mode: 'simple' }) }));
+}
