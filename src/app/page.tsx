@@ -40,7 +40,7 @@ export default async function HomePage() {
             <img
               src={perfil.foto_url}
               alt={perfil.nombre_completo}
-              className="w-32 h-32 rounded-full border-4 border-white/20 object-cover"
+              className="w-48 h-48 rounded-full border-4 border-white/20 object-cover"
             />
           )}
           <div className="text-center md:text-left flex-1">
