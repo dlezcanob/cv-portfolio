@@ -62,15 +62,19 @@ function drawText(ctx: DrawContext, text: string, options: { size?: number; font
   }
   if (line) lines.push(line);
 
-  for (const l of lines) {
+  for (let li = 0; li < lines.length; li++) {
+    const l = lines[li];
     checkNewPage(ctx, size + 4);
-    ctx.page.drawText(l, {
-      x: MARGIN_LEFT + indent,
-      y: ctx.y,
-      size,
-      font,
-      color,
-    });
+    const isLast = li === lines.length - 1;
+    if (!isLast && lines.length > 1) {
+      const ws = l.split(' ');
+      if (ws.length > 1) {
+        const tw = ws.reduce((s: number, w: string) => s + font.widthOfTextAtSize(w, size), 0);
+        const sp = (maxWidth - tw) / (ws.length - 1);
+        let xp = MARGIN_LEFT + indent;
+        for (const w of ws) { ctx.page.drawText(w, { x: xp, y: ctx.y, size, font, color }); xp += font.widthOfTextAtSize(w, size) + sp; }
+      } else { ctx.page.drawText(l, { x: MARGIN_LEFT + indent, y: ctx.y, size, font, color }); }
+    } else { ctx.page.drawText(l, { x: MARGIN_LEFT + indent, y: ctx.y, size, font, color }); }
     ctx.y -= size + 4;
   }
 }
@@ -229,30 +233,30 @@ export async function POST(request: NextRequest): Promise<NextResponse> {
         drawText(ctx, 'Funciones asignadas:', { size: 9, font: fontBold });
         ctx.y -= 1;
         for (const f of funciones) {
-          drawText(ctx, '>  ' + f, { size: 9, indent: 14, color: GRAY });
+          drawText(ctx, '>  ' + f, { size: 9, indent: 30, color: GRAY });
         }
       }
 
       const logros = Array.isArray(exp.logros) ? exp.logros : [];
       if (logros.length > 0) {
         ctx.y -= 4;
-        drawText(ctx, 'Logros:', { size: 9, font: fontBold, indent: 14 });
+        drawText(ctx, 'Logros:', { size: 9, font: fontBold, indent: 30 });
         for (const l of logros) {
-          drawText(ctx, l, { size: 9, indent: 20, color: GRAY });
+          drawText(ctx, l, { size: 9, indent: 36, color: GRAY });
         }
       }
 
       const reconocimientos = Array.isArray(exp.reconocimientos) ? exp.reconocimientos : [];
       if (reconocimientos.length > 0) {
         ctx.y -= 4;
-        drawText(ctx, 'Reconocimientos:', { size: 9, font: fontBold, indent: 14 });
+        drawText(ctx, 'Reconocimientos:', { size: 9, font: fontBold, indent: 30 });
         for (const r of reconocimientos) {
           const rObj = r as { titulo: string; url?: string };
           if (rObj.url) {
-            drawText(ctx, rObj.titulo, { size: 9, indent: 20, color: GRAY });
-            drawText(ctx, rObj.url, { size: 8, indent: 20, color: BLUE });
+            drawText(ctx, rObj.titulo, { size: 9, indent: 36, color: GRAY });
+            drawText(ctx, rObj.url, { size: 8, indent: 36, color: BLUE });
           } else {
-            drawText(ctx, rObj.titulo, { size: 9, indent: 20, color: GRAY });
+            drawText(ctx, rObj.titulo, { size: 9, indent: 36, color: GRAY });
           }
         }
       }
@@ -260,9 +264,9 @@ export async function POST(request: NextRequest): Promise<NextResponse> {
       const proyectos = Array.isArray(exp.proyectos) ? exp.proyectos : [];
       if (proyectos.length > 0) {
         ctx.y -= 4;
-        drawText(ctx, 'Proyectos principales:', { size: 9, font: fontBold, indent: 14 });
+        drawText(ctx, 'Proyectos principales:', { size: 9, font: fontBold, indent: 30 });
         proyectos.forEach((p: string, i: number) => {
-          drawText(ctx, (i + 1) + '. ' + p, { size: 9, indent: 20, color: GRAY });
+          drawText(ctx, (i + 1) + '. ' + p, { size: 9, indent: 36, color: GRAY });
         });
       }
 
