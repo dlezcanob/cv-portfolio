@@ -339,23 +339,27 @@ export async function POST(request: NextRequest): Promise<NextResponse> {
           }
         } catch { continue; }
       }
-
-      if (empresa && empresa.trim()) {
-        const wFont = await doc.embedFont(StandardFonts.Helvetica);
+	  
+        if (empresa && empresa.trim()) {
+        const wFont = await doc.embedFont(StandardFonts.HelveticaBold);
         const pages = doc.getPages();
         const watermarkText = 'Exclusivo para evaluacion en ' + empresa;
         for (let i = cvPageCount; i < pages.length; i++) {
           const pg = pages[i];
           const { width, height } = pg.getSize();
-          pg.drawText(watermarkText, {
-            x: width / 2 - 170,
-            y: height / 2,
-            size: 30,
-            font: wFont,
-            color: rgb(0.7, 0.7, 0.7),
-            opacity: 0.12,
-            rotate: degrees(45),
-          });
+          for (let row = -200; row < height + 200; row += 120) {
+            for (let col = -400; col < width + 400; col += 500) {
+              pg.drawText(watermarkText, {
+                x: col,
+                y: row,
+                size: 38,
+                font: wFont,
+                color: rgb(0.6, 0.6, 0.6),
+                opacity: 0.18,
+                rotate: degrees(45),
+              });
+            }
+          }
         }
       }
     }
