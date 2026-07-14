@@ -23,6 +23,7 @@ export interface Experiencia {
   reconocimientos: Reconocimiento[] | null
   proyectos: string[] | null
   archivo_url: string | null
+  archivo_tachado_url: string | null
   orden: number
   visible: boolean
   created_at: string
@@ -41,6 +42,7 @@ export interface Educacion {
   fecha_inicio: string
   fecha_fin: string
   archivo_url: string | null
+  archivo_tachado_url: string | null
   tipo: string
   orden: number
   visible: boolean
@@ -54,6 +56,7 @@ export interface Certificacion {
   codigo: string | null
   fecha_obtencion: string | null
   archivo_url: string | null
+  archivo_tachado_url: string | null
   principal: boolean
   orden: number
   visible: boolean

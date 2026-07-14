@@ -113,10 +113,12 @@ export async function POST(request: NextRequest): Promise<NextResponse> {
   try {
     let mode = 'simple';
     let empresa = '';
+  let usarTachado = false;
     try {
       const body = await request.json();
       mode = body.mode || 'simple';
       empresa = body.empresa || '';
+      usarTachado = body.usarTachado || false;
     } catch {}
 
     const supabase = createServerSupabaseClient();
@@ -306,13 +308,22 @@ export async function POST(request: NextRequest): Promise<NextResponse> {
 
       const archivos: { url: string }[] = [];
       if (experiencias) {
-        for (const e of experiencias) { if (e.archivo_url) archivos.push({ url: e.archivo_url }); }
+        for (const e of experiencias) {
+          const url = usarTachado && e.archivo_tachado_url ? e.archivo_tachado_url : e.archivo_url;
+          if (url) archivos.push({ url });
+        }
       }
       if (educacion) {
-        for (const e of educacion) { if (e.archivo_url) archivos.push({ url: e.archivo_url }); }
+        for (const e of educacion) {
+          const url = usarTachado && e.archivo_tachado_url ? e.archivo_tachado_url : e.archivo_url;
+          if (url) archivos.push({ url });
+        }
       }
       if (certificaciones) {
-        for (const c of certificaciones) { if (c.archivo_url) archivos.push({ url: c.archivo_url }); }
+        for (const c of certificaciones) {
+          const url = usarTachado && c.archivo_tachado_url ? c.archivo_tachado_url : c.archivo_url;
+          if (url) archivos.push({ url });
+        }
       }
 
       for (const archivo of archivos) {
