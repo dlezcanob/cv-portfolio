@@ -289,9 +289,13 @@ export async function POST(request: NextRequest): Promise<NextResponse> {
         drawText(ctx, edu.titulo, { size: 10, color: GRAY });
         ctx.y -= 8;
       }
-      if (cursos.length > 0) {
+        if (cursos.length > 0) {
+        const meses: Record<string, number> = { 'Enero': 1, 'Febrero': 2, 'Marzo': 3, 'Abril': 4, 'Mayo': 5, 'Junio': 6, 'Julio': 7, 'Agosto': 8, 'Septiembre': 9, 'Octubre': 10, 'Noviembre': 11, 'Diciembre': 12 };
+        const parseFecha = (d: string) => { const p = d.split(' '); return parseInt(p[1]) * 12 + (meses[p[0]] || 0); };
+        const cursosSorted = [...cursos].sort((a, b) => parseFecha(b.fecha_inicio) - parseFecha(a.fecha_inicio));
         ctx.y -= 6;
-        for (const cur of cursos) {
+        for (const cur of cursosSorted) {
+
           checkNewPage(ctx, 14);
           ctx.page.drawText(cur.fecha_inicio, { x: MARGIN_LEFT, y: ctx.y, size: 9, font, color: BLACK });
           ctx.page.drawText(cur.institucion, { x: MARGIN_LEFT + 100, y: ctx.y, size: 9, font, color: BLACK });
