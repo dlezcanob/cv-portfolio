@@ -83,3 +83,13 @@ export interface PdfGenerationOptions {
   mode: 'simple' | 'documentado'
   empresa?: string
 }
+
+export interface Referencia {
+  id: string
+  nombre: string
+  telefono: string
+  cargo_empresa: string
+  orden: number
+  visible: boolean
+  created_at: string
+}

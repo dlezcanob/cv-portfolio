@@ -300,7 +300,19 @@ export async function POST(request: NextRequest): Promise<NextResponse> {
         }
       }
     }
-
+	
+    // === REFERENCIAS ===
+    const { data: referencias } = await supabase.from('referencias').select('*').eq('visible', true).order('orden');
+    if (referencias && referencias.length > 0) {
+      drawSectionTitle(ctx, 'Referencias');
+      for (const ref of referencias) {
+        checkNewPage(ctx, 14);
+        ctx.page.drawText(ref.nombre, { x: MARGIN_LEFT, y: ctx.y, size: 9, font: fontBold, color: BLACK });
+        ctx.page.drawText(ref.telefono, { x: MARGIN_LEFT + 150, y: ctx.y, size: 9, font, color: BLACK });
+        ctx.page.drawText(ref.cargo_empresa, { x: MARGIN_LEFT + 240, y: ctx.y, size: 9, font, color: GRAY });
+        ctx.y -= 13;
+      }
+    }
 
     // === MODO DOCUMENTADO ===
     if (mode === 'documentado') {
