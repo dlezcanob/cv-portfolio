@@ -172,6 +172,12 @@ export default function EducacionPage() {
                       <Upload size={16} className="text-blue-500" />
                       <input type="file" accept=".pdf,.jpg,.jpeg,.png" className="hidden" disabled={uploading} onChange={(e) => { if (e.target.files?.[0]) handleFileUpload(item.id, e.target.files[0]) }} />
                     </label>
+					{item.archivo_url && (
+                      <a href={item.archivo_url} target="_blank" rel="noopener noreferrer" className="p-1.5 hover:bg-gray-100 rounded" title="Ver sustento">
+                        <FileText size={14} className="text-green-500" />
+                      </a>
+                    )}
+
                     {item.archivo_url && <a href={item.archivo_url} target="_blank" rel="noopener noreferrer" className="p-2 hover:bg-gray-100 rounded"><FileText size={16} className="text-green-500" /></a>}
                     <button onClick={() => toggleVisible(item)} className="p-2 hover:bg-gray-100 rounded">{item.visible ? <Eye size={16} className="text-gray-500" /> : <EyeOff size={16} className="text-orange-500" />}</button>
                     <button onClick={() => startEdit(item)} className="p-2 hover:bg-gray-100 rounded"><Edit2 size={16} className="text-gray-500" /></button>
@@ -203,6 +209,11 @@ export default function EducacionPage() {
                       <Upload size={14} className="text-blue-500" />
                       <input type="file" accept=".pdf,.jpg,.jpeg,.png" className="hidden" disabled={uploading} onChange={(e) => { if (e.target.files?.[0]) handleFileUpload(item.id, e.target.files[0]) }} />
                     </label>
+					{item.archivo_url && (
+                      <a href={item.archivo_url} target="_blank" rel="noopener noreferrer" className="p-1.5 hover:bg-gray-100 rounded" title="Ver sustento">
+                        <FileText size={14} className="text-green-500" />
+                      </a>
+                    )}
                     <button onClick={() => toggleVisible(item)} className="p-1.5 hover:bg-gray-100 rounded">{item.visible ? <Eye size={14} className="text-gray-500" /> : <EyeOff size={14} className="text-orange-500" />}</button>
                     <button onClick={() => startEdit(item)} className="p-1.5 hover:bg-gray-100 rounded"><Edit2 size={14} className="text-gray-500" /></button>
                     <button onClick={() => handleDelete(item.id)} className="p-1.5 hover:bg-red-50 rounded"><Trash2 size={14} className="text-red-500" /></button>
