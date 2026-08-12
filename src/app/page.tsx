@@ -28,7 +28,18 @@ export default async function HomePage() {
     )
   }
 
-  const { perfil, experiencias, certificaciones, educacion } = cvData
+  const { perfil, experiencias: rawExperiencias, certificaciones, educacion } = cvData
+
+  // Ordenar experiencias por fecha_inicio descendente (más reciente primero)
+  const experiencias = [...rawExperiencias].sort((a, b) => {
+    const parse = (d: string) => {
+      if (d === 'Actualidad') return 99999
+      const parts = d.split('/')
+      if (parts.length === 2) return parseInt(parts[1]) * 12 + parseInt(parts[0])
+      return 0
+    }
+    return parse(b.fecha_inicio) - parse(a.fecha_inicio)
+  })
 
   return (
     <main className="min-h-screen bg-gradient-to-b from-slate-50 to-white">
@@ -86,6 +97,55 @@ export default async function HomePage() {
                   {cert.codigo && <p className="text-xs text-gray-400 mt-1">{cert.codigo}</p>}
                 </div>
               ))}
+            </div>
+          </section>
+        )}
+
+        {/* Línea del Tiempo Profesional */}
+        {experiencias.length > 0 && (
+          <section>
+            <h2 className="text-xl font-bold text-[#1B4F72] mb-6 flex items-center gap-2">
+              <Briefcase size={22} /> Trayectoria Profesional
+            </h2>
+            <div className="relative">
+              {/* Línea horizontal central */}
+              <div className="absolute top-6 left-0 right-0 h-0.5 bg-[#1B4F72]/20 hidden md:block" />
+              
+              <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-4 md:gap-6">
+                {[...experiencias].reverse().map((exp, index) => {
+                  const isActive = exp.fecha_fin === 'Actualidad'
+                  return (
+                    <div key={exp.id} className="relative flex flex-col items-center text-center group">
+                      {/* Punto en la línea */}
+                      <div className={`hidden md:block w-3 h-3 rounded-full border-2 mb-3 z-10 ${
+                        isActive 
+                          ? 'bg-green-500 border-green-600 ring-4 ring-green-100' 
+                          : 'bg-[#1B4F72] border-[#1B4F72]'
+                      }`} />
+                      
+                      {/* Card de la empresa */}
+                      <div className={`w-full rounded-lg p-3 border transition-all ${
+                        isActive 
+                          ? 'bg-green-50 border-green-200 shadow-md' 
+                          : 'bg-white border-gray-200 shadow-sm hover:shadow-md'
+                      }`}>
+                        <p className={`font-bold text-xs ${isActive ? 'text-green-700' : 'text-[#1B4F72]'}`}>
+                          {exp.institucion}
+                        </p>
+                        <p className="text-xs text-gray-600 mt-1 font-medium">{exp.cargo}</p>
+                        <p className={`text-xs mt-1 ${isActive ? 'text-green-600 font-semibold' : 'text-gray-400'}`}>
+                          {exp.fecha_inicio} – {exp.fecha_fin}
+                        </p>
+                        {isActive && (
+                          <span className="inline-block mt-1.5 text-[10px] bg-green-100 text-green-700 px-2 py-0.5 rounded-full font-medium">
+                            Actual
+                          </span>
+                        )}
+                      </div>
+                    </div>
+                  )
+                })}
+              </div>
             </div>
           </section>
         )}
