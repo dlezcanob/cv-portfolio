@@ -112,7 +112,7 @@ export default async function HomePage() {
               <div className="absolute top-6 left-0 right-0 h-0.5 bg-[#1B4F72]/20 hidden md:block" />
               
               <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-4 md:gap-6">
-                {[...experiencias].reverse().map((exp, index) => {
+                {[...experiencias].reverse().map((exp) => {
                   const isActive = exp.fecha_fin === 'Actualidad'
                   return (
                     <div key={exp.id} className="relative flex flex-col items-center text-center group">
