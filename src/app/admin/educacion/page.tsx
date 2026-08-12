@@ -98,8 +98,7 @@ export default function EducacionPage() {
   if (loading) return <div className="text-center py-10 text-gray-500">Cargando...</div>
 
   const grados = items.filter((i) => (i as Educacion & { tipo?: string }).tipo !== 'curso')
-  const cursos = items.filter((i) => (i as Educacion & { tipo?: string }).tipo === 'curso')
-    const cursos = items.filter((i) => (i as Educacion & { tipo?: string }).tipo === 'curso').sort((a, b) => {
+  const cursos = items.filter((i) => (i as Educacion & { tipo?: string }).tipo === 'curso').sort((a, b) => {
     const meses: Record<string, number> = { 'Enero': 1, 'Febrero': 2, 'Marzo': 3, 'Abril': 4, 'Mayo': 5, 'Junio': 6, 'Julio': 7, 'Agosto': 8, 'Septiembre': 9, 'Octubre': 10, 'Noviembre': 11, 'Diciembre': 12 }
     const parse = (d: string) => { const p = d.split(' '); return parseInt(p[1]) * 12 + (meses[p[0]] || 0) }
     return parse(b.fecha_inicio) - parse(a.fecha_inicio)

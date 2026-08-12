@@ -7,6 +7,7 @@
 import { useState } from 'react'
 import { createClient } from '@/lib/supabase/client'
 import { useRouter } from 'next/navigation'
+import Link from 'next/link'
 import { LogIn, Loader2 } from 'lucide-react'
 
 export default function LoginPage() {
@@ -88,6 +89,15 @@ export default function LoginPage() {
             {loading ? 'Ingresando...' : 'Ingresar'}
           </button>
         </form>
+
+        <div className="mt-4 text-center">
+          <Link
+            href="/login/forgot-password"
+            className="text-sm text-[#1B4F72] hover:underline"
+          >
+            ¿Olvidaste tu contraseña?
+          </Link>
+        </div>
       </div>
     </main>
   )
