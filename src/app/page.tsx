@@ -6,6 +6,7 @@
 import { getCvData } from '@/lib/data'
 import { Phone, Mail, Briefcase, GraduationCap, Award, CheckCircle } from 'lucide-react'
 import { DownloadButton } from '@/components/DownloadButton'
+import { TrackVisit } from '@/components/TrackVisit'
 
 export default async function HomePage() {
   const cvData = await getCvData()
@@ -43,6 +44,7 @@ export default async function HomePage() {
 
   return (
     <main className="min-h-screen bg-gradient-to-b from-slate-50 to-white">
+      <TrackVisit />
       {/* Hero / Header */}
       <header className="bg-[#1B4F72] text-white py-12 px-4">
         <div className="max-w-4xl mx-auto flex flex-col md:flex-row items-center gap-8">

@@ -117,3 +117,23 @@ INSERT INTO certificaciones (nombre, institucion_emisora, codigo, orden) VALUES
 ('Project Management Professional (PMP)®', 'PMI', '(2020921)', 1),
 ('ITIL ® Foundation', 'EXIN', 'EXIN247807', 2),
 ('Scrum Master Certified', 'CertiProf', '(655994)', 3);
+
+-- =============================================================
+-- Tabla: visitas (analytics interno)
+-- =============================================================
+CREATE TABLE visitas (
+  id UUID DEFAULT gen_random_uuid() PRIMARY KEY,
+  pagina TEXT NOT NULL DEFAULT '/',
+  referrer TEXT,
+  user_agent TEXT,
+  ip_hash TEXT,
+  created_at TIMESTAMPTZ DEFAULT now()
+);
+
+ALTER TABLE visitas ENABLE ROW LEVEL SECURITY;
+
+-- Lectura solo para usuarios autenticados (admin)
+CREATE POLICY "Lectura autenticada visitas" ON visitas FOR SELECT USING (auth.role() = 'authenticated');
+
+-- Inserción pública (para registrar visitas desde la página pública)
+CREATE POLICY "Insercion publica visitas" ON visitas FOR INSERT WITH CHECK (true);
