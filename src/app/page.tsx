@@ -102,83 +102,131 @@ export default async function HomePage() {
         )}
 
         {/* Línea del Tiempo Profesional */}
-        {experiencias.length > 0 && (
-          <section>
-            <h2 className="text-xl font-bold text-[#1B4F72] mb-6 flex items-center gap-2">
-              <Briefcase size={22} /> Trayectoria Profesional
-            </h2>
-            <div className="relative">
-              {/* Línea horizontal central */}
-              <div className="absolute top-6 left-0 right-0 h-0.5 bg-[#1B4F72]/20 hidden md:block" />
-              
-              <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-4 md:gap-6">
-                {experiencias.map((exp) => {
-                  const isActive = exp.fecha_fin === 'Actualidad'
+        {experiencias.length > 0 && (() => {
+          // Agrupar experiencias por institución (mantener orden de primera aparición)
+          const groupedTimeline: { institucion: string; roles: typeof experiencias }[] = []
+          experiencias.forEach((exp) => {
+            const existing = groupedTimeline.find((g) => g.institucion === exp.institucion)
+            if (existing) {
+              existing.roles.push(exp)
+            } else {
+              groupedTimeline.push({ institucion: exp.institucion, roles: [exp] })
+            }
+          })
+
+          return (
+            <section>
+              <h2 className="text-xl font-bold text-[#1B4F72] mb-6 flex items-center gap-2">
+                <Briefcase size={22} /> Trayectoria Profesional
+              </h2>
+              <div className="relative">
+                {/* Línea horizontal central */}
+                <div className="absolute top-6 left-0 right-0 h-0.5 bg-[#1B4F72]/20 hidden md:block" />
+                
+                <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-4 md:gap-6">
+                  {groupedTimeline.map((group) => {
+                    const isActive = group.roles.some((r) => r.fecha_fin === 'Actualidad')
+                    const fechaInicio = group.roles[group.roles.length - 1].fecha_inicio
+                    const fechaFin = group.roles[0].fecha_fin
+                    return (
+                      <div key={group.institucion} className="relative flex flex-col items-center text-center group">
+                        {/* Punto en la línea */}
+                        <div className={`hidden md:block w-3 h-3 rounded-full border-2 mb-3 z-10 ${
+                          isActive 
+                            ? 'bg-green-500 border-green-600 ring-4 ring-green-100' 
+                            : 'bg-[#1B4F72] border-[#1B4F72]'
+                        }`} />
+                        
+                        {/* Card de la empresa */}
+                        <div className={`w-full rounded-lg p-3 border transition-all ${
+                          isActive 
+                            ? 'bg-green-50 border-green-200 shadow-md' 
+                            : 'bg-white border-gray-200 shadow-sm hover:shadow-md'
+                        }`}>
+                          <p className={`font-bold text-xs ${isActive ? 'text-green-700' : 'text-[#1B4F72]'}`}>
+                            {group.institucion}
+                          </p>
+                          {group.roles.map((role) => (
+                            <p key={role.id} className="text-xs text-gray-600 mt-1 font-medium">
+                              {role.cargo}
+                            </p>
+                          ))}
+                          <p className={`text-xs mt-1 ${isActive ? 'text-green-600 font-semibold' : 'text-gray-400'}`}>
+                            {fechaInicio} – {fechaFin}
+                          </p>
+                          {isActive && (
+                            <span className="inline-block mt-1.5 text-[10px] bg-green-100 text-green-700 px-2 py-0.5 rounded-full font-medium">
+                              Actual
+                            </span>
+                          )}
+                        </div>
+                      </div>
+                    )
+                  })}
+                </div>
+              </div>
+            </section>
+          )
+        })()}
+
+        {/* Experiencia */}
+        {experiencias.length > 0 && (() => {
+          // Agrupar experiencias por institución
+          const grouped: { institucion: string; roles: typeof experiencias }[] = []
+          experiencias.forEach((exp) => {
+            const existing = grouped.find((g) => g.institucion === exp.institucion)
+            if (existing) {
+              existing.roles.push(exp)
+            } else {
+              grouped.push({ institucion: exp.institucion, roles: [exp] })
+            }
+          })
+
+          return (
+            <section>
+              <h2 className="text-xl font-bold text-[#1B4F72] mb-6 flex items-center gap-2">
+                <Briefcase size={22} /> Experiencia Profesional
+              </h2>
+              <div className="space-y-6">
+                {grouped.map((group) => {
+                  const fechaInicio = group.roles[group.roles.length - 1].fecha_inicio
+                  const fechaFin = group.roles[0].fecha_fin
                   return (
-                    <div key={exp.id} className="relative flex flex-col items-center text-center group">
-                      {/* Punto en la línea */}
-                      <div className={`hidden md:block w-3 h-3 rounded-full border-2 mb-3 z-10 ${
-                        isActive 
-                          ? 'bg-green-500 border-green-600 ring-4 ring-green-100' 
-                          : 'bg-[#1B4F72] border-[#1B4F72]'
-                      }`} />
-                      
-                      {/* Card de la empresa */}
-                      <div className={`w-full rounded-lg p-3 border transition-all ${
-                        isActive 
-                          ? 'bg-green-50 border-green-200 shadow-md' 
-                          : 'bg-white border-gray-200 shadow-sm hover:shadow-md'
-                      }`}>
-                        <p className={`font-bold text-xs ${isActive ? 'text-green-700' : 'text-[#1B4F72]'}`}>
-                          {exp.institucion}
-                        </p>
-                        <p className="text-xs text-gray-600 mt-1 font-medium">{exp.cargo}</p>
-                        <p className={`text-xs mt-1 ${isActive ? 'text-green-600 font-semibold' : 'text-gray-400'}`}>
-                          {exp.fecha_inicio} – {exp.fecha_fin}
-                        </p>
-                        {isActive && (
-                          <span className="inline-block mt-1.5 text-[10px] bg-green-100 text-green-700 px-2 py-0.5 rounded-full font-medium">
-                            Actual
-                          </span>
-                        )}
+                    <div key={group.institucion} className="bg-white border border-gray-200 rounded-lg p-5 shadow-sm">
+                      <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between mb-2">
+                        <p className="text-[#2E86C1] font-medium">{group.institucion}</p>
+                        <span className="text-sm text-gray-500">{fechaInicio} – {fechaFin}</span>
+                      </div>
+
+                      <div className={`${group.roles.length > 1 ? 'border-l-2 border-[#1B4F72]/20 pl-4 space-y-4 mt-3' : ''}`}>
+                        {group.roles.map((exp) => (
+                          <div key={exp.id}>
+                            <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between mb-1">
+                              <h3 className="font-bold text-gray-800">{exp.cargo}</h3>
+                              {group.roles.length > 1 && (
+                                <span className="text-xs text-gray-400">{exp.fecha_inicio} – {exp.fecha_fin}</span>
+                              )}
+                            </div>
+                            {Array.isArray(exp.funciones) && exp.funciones.length > 0 && (
+                              <ul className="space-y-1 mt-1">
+                                {exp.funciones.map((f, i) => (
+                                  <li key={i} className="flex items-start gap-2 text-sm text-gray-600">
+                                    <CheckCircle size={14} className="text-green-500 mt-0.5 flex-shrink-0" />
+                                    <span>{f}</span>
+                                  </li>
+                                ))}
+                              </ul>
+                            )}
+                          </div>
+                        ))}
                       </div>
                     </div>
                   )
                 })}
               </div>
-            </div>
-          </section>
-        )}
-
-        {/* Experiencia */}
-        {experiencias.length > 0 && (
-          <section>
-            <h2 className="text-xl font-bold text-[#1B4F72] mb-6 flex items-center gap-2">
-              <Briefcase size={22} /> Experiencia Profesional
-            </h2>
-            <div className="space-y-6">
-              {experiencias.map((exp) => (
-                <div key={exp.id} className="bg-white border border-gray-200 rounded-lg p-5 shadow-sm">
-                  <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between mb-2">
-                    <h3 className="font-bold text-gray-800">{exp.cargo}</h3>
-                    <span className="text-sm text-gray-500">{exp.fecha_inicio} – {exp.fecha_fin}</span>
-                  </div>
-                  <p className="text-[#2E86C1] font-medium mb-3">{exp.institucion}</p>
-                  {Array.isArray(exp.funciones) && exp.funciones.length > 0 && (
-                    <ul className="space-y-1">
-                      {exp.funciones.map((f, i) => (
-                        <li key={i} className="flex items-start gap-2 text-sm text-gray-600">
-                          <CheckCircle size={14} className="text-green-500 mt-0.5 flex-shrink-0" />
-                          <span>{f}</span>
-                        </li>
-                      ))}
-                    </ul>
-                  )}
-                </div>
-              ))}
-            </div>
-          </section>
-        )}
+            </section>
+          )
+        })()}
 
         {/* Educación */}
         {educacion.length > 0 && (
