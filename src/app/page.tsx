@@ -148,6 +148,9 @@ export default async function HomePage() {
                           <p className={`font-semibold text-[10px] leading-tight ${isActive ? 'text-green-700' : 'text-[#1B4F72]'}`}>
                             {group.institucion.length > 30 ? group.institucion.split(' - ')[0] : group.institucion}
                           </p>
+                          <p className="text-[9px] text-gray-600 mt-0.5 leading-tight">
+                            {group.roles.map((r) => r.cargo.split(' - ')[0].split(' (')[0].trim()).join(' / ')}
+                          </p>
                           <p className={`text-[9px] mt-1 ${isActive ? 'text-green-600' : 'text-gray-400'}`}>
                             {fechaInicio} – {fechaFin}
                           </p>
