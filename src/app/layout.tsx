@@ -4,10 +4,17 @@ import './globals.css'
 export const metadata: Metadata = {
   title: 'David Lezcano Balarezo | Portfolio Profesional',
   description: 'Ingeniero Empresarial y de Sistema. +20 años de experiencia en gestión de proyectos TI, transformación digital y gobierno corporativo. PMP, ITIL, Scrum Master.',
+  metadataBase: new URL('https://cv-portfolio-beryl-nine.vercel.app'),
   openGraph: {
     title: 'David Lezcano Balarezo | Portfolio Profesional',
-    description: 'Ingeniero con +20 años liderando proyectos de transformación digital.',
+    description: 'Ingeniero con +20 años liderando proyectos de transformación digital, gobierno corporativo y gestión de TI.',
     type: 'website',
+    url: 'https://cv-portfolio-beryl-nine.vercel.app',
+  },
+  twitter: {
+    card: 'summary_large_image',
+    title: 'David Lezcano Balarezo | Portfolio Profesional',
+    description: 'Ingeniero con +20 años liderando proyectos de transformación digital.',
   },
 }
 
