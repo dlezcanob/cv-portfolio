@@ -80,7 +80,7 @@ export default async function HomePage() {
       <div className="max-w-4xl mx-auto px-4 py-10 space-y-12">
         {/* Resumen */}
         <section>
-          <p className="text-gray-700 leading-relaxed text-justify max-w-prose">
+          <p className="text-gray-700 leading-relaxed text-justify">
             {perfil.resumen}
           </p>
         </section>
@@ -121,46 +121,36 @@ export default async function HomePage() {
               <h2 className="text-xl font-bold text-[#1B4F72] mb-6 flex items-center gap-2">
                 <Briefcase size={22} /> Trayectoria Profesional
               </h2>
-              <div className="relative">
-                {/* Línea horizontal central */}
-                <div className="absolute top-6 left-0 right-0 h-0.5 bg-[#1B4F72]/20 hidden md:block" />
+              <div className="relative overflow-x-auto pb-2">
+                {/* Línea horizontal */}
+                <div className="absolute top-4 left-0 right-0 h-0.5 bg-[#1B4F72]/15 hidden md:block" />
                 
-                <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-4 md:gap-6">
+                <div className="flex gap-3 md:gap-4 min-w-max md:min-w-0 md:grid md:grid-cols-4 lg:grid-cols-5 xl:grid-cols-6">
                   {groupedTimeline.map((group) => {
                     const isActive = group.roles.some((r) => r.fecha_fin === 'Actualidad')
                     const fechaInicio = group.roles[group.roles.length - 1].fecha_inicio
                     const fechaFin = group.roles[0].fecha_fin
                     return (
-                      <div key={group.institucion} className="relative flex flex-col items-center text-center group">
-                        {/* Punto en la línea */}
-                        <div className={`hidden md:block w-3 h-3 rounded-full border-2 mb-3 z-10 ${
+                      <div key={group.institucion} className="relative flex flex-col items-center text-center">
+                        {/* Punto */}
+                        <div className={`hidden md:block w-2.5 h-2.5 rounded-full mb-2 z-10 ${
                           isActive 
-                            ? 'bg-green-500 border-green-600 ring-4 ring-green-100' 
-                            : 'bg-[#1B4F72] border-[#1B4F72]'
+                            ? 'bg-green-500 ring-3 ring-green-100' 
+                            : 'bg-[#1B4F72]'
                         }`} />
                         
-                        {/* Card de la empresa */}
-                        <div className={`w-full rounded-lg p-3 border transition-all ${
+                        {/* Card compacta */}
+                        <div className={`w-28 md:w-full rounded-md px-2 py-2 border ${
                           isActive 
-                            ? 'bg-green-50 border-green-200 shadow-md' 
-                            : 'bg-white border-gray-200 shadow-sm hover:shadow-md'
+                            ? 'bg-green-50 border-green-200' 
+                            : 'bg-white border-gray-200'
                         }`}>
-                          <p className={`font-bold text-xs ${isActive ? 'text-green-700' : 'text-[#1B4F72]'}`}>
-                            {group.institucion}
+                          <p className={`font-semibold text-[10px] leading-tight ${isActive ? 'text-green-700' : 'text-[#1B4F72]'}`}>
+                            {group.institucion.length > 30 ? group.institucion.split(' - ')[0] : group.institucion}
                           </p>
-                          {group.roles.map((role) => (
-                            <p key={role.id} className="text-xs text-gray-600 mt-1 font-medium">
-                              {role.cargo}
-                            </p>
-                          ))}
-                          <p className={`text-xs mt-1 ${isActive ? 'text-green-600 font-semibold' : 'text-gray-400'}`}>
+                          <p className={`text-[9px] mt-1 ${isActive ? 'text-green-600' : 'text-gray-400'}`}>
                             {fechaInicio} – {fechaFin}
                           </p>
-                          {isActive && (
-                            <span className="inline-block mt-1.5 text-[10px] bg-green-100 text-green-700 px-2 py-0.5 rounded-full font-medium">
-                              Actual
-                            </span>
-                          )}
                         </div>
                       </div>
                     )
