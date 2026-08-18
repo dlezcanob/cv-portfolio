@@ -198,11 +198,16 @@ export default async function HomePage() {
             }
           })
 
+          // Calcular tiempo total laborado (desde la experiencia más antigua hasta hoy)
+          const primeraFecha = experiencias[experiencias.length - 1].fecha_inicio
+          const totalExperiencia = calcDuracion(primeraFecha, 'Actualidad')
+
           return (
             <section>
-              <h2 className="text-xl font-bold text-[#1B4F72] mb-6 flex items-center gap-2">
+              <h2 className="text-xl font-bold text-[#1B4F72] mb-1 flex items-center gap-2">
                 <Briefcase size={22} /> Experiencia Profesional
               </h2>
+              <p className="text-sm text-gray-500 mb-6">Tiempo total: {totalExperiencia}</p>
               <div className="space-y-6">
                 {grouped.map((group) => {
                   const fechaInicio = group.roles[group.roles.length - 1].fecha_inicio
