@@ -54,7 +54,7 @@ export default async function HomePage() {
     }
     const i = parseDate(inicio)
     const f = parseDate(fin)
-    let totalMeses = (f.anio - i.anio) * 12 + (f.mes - i.mes) + 1
+    let totalMeses = (f.anio - i.anio) * 12 + (f.mes - i.mes)
     if (totalMeses < 1) totalMeses = 1
     const anios = Math.floor(totalMeses / 12)
     const meses = totalMeses % 12
