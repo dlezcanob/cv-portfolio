@@ -42,6 +42,27 @@ export default async function HomePage() {
     return parse(b.fecha_inicio) - parse(a.fecha_inicio)
   })
 
+  // Calcular duración entre dos fechas MM/YYYY
+  function calcDuracion(inicio: string, fin: string): string {
+    const parseDate = (d: string) => {
+      if (d === 'Actualidad') {
+        const now = new Date()
+        return { mes: now.getMonth() + 1, anio: now.getFullYear() }
+      }
+      const [m, y] = d.split('/')
+      return { mes: parseInt(m), anio: parseInt(y) }
+    }
+    const i = parseDate(inicio)
+    const f = parseDate(fin)
+    let totalMeses = (f.anio - i.anio) * 12 + (f.mes - i.mes) + 1
+    if (totalMeses < 1) totalMeses = 1
+    const anios = Math.floor(totalMeses / 12)
+    const meses = totalMeses % 12
+    if (anios === 0) return `${meses} mes${meses !== 1 ? 'es' : ''}`
+    if (meses === 0) return `${anios} año${anios !== 1 ? 's' : ''}`
+    return `${anios} año${anios !== 1 ? 's' : ''} ${meses} mes${meses !== 1 ? 'es' : ''}`
+  }
+
   return (
     <main className="min-h-screen bg-gradient-to-b from-slate-50 to-white">
       <TrackVisit />
@@ -186,11 +207,12 @@ export default async function HomePage() {
                 {grouped.map((group) => {
                   const fechaInicio = group.roles[group.roles.length - 1].fecha_inicio
                   const fechaFin = group.roles[0].fecha_fin
+                  const duracion = calcDuracion(fechaInicio, fechaFin)
                   return (
                     <div key={group.institucion} className="bg-white border border-gray-200 rounded-lg p-5 shadow-sm">
                       <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between mb-2">
                         <p className="text-[#2E86C1] font-medium">{group.institucion}</p>
-                        <span className="text-sm text-gray-500">{fechaInicio} – {fechaFin}</span>
+                        <span className="text-sm text-gray-500">{fechaInicio} – {fechaFin} <span className="text-xs text-gray-400">({duracion})</span></span>
                       </div>
 
                       <div className={`${group.roles.length > 1 ? 'border-l-2 border-[#1B4F72]/20 pl-4 space-y-4 mt-3' : ''}`}>
@@ -199,7 +221,7 @@ export default async function HomePage() {
                             <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between mb-1">
                               <h3 className="font-bold text-gray-800">{exp.cargo}</h3>
                               {group.roles.length > 1 && (
-                                <span className="text-xs text-gray-400">{exp.fecha_inicio} – {exp.fecha_fin}</span>
+                                <span className="text-xs text-gray-400">{exp.fecha_inicio} – {exp.fecha_fin} ({calcDuracion(exp.fecha_inicio, exp.fecha_fin)})</span>
                               )}
                             </div>
                             {Array.isArray(exp.funciones) && exp.funciones.length > 0 && (
