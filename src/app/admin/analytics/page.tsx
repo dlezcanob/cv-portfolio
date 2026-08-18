@@ -153,20 +153,29 @@ export default function AnalyticsPage() {
       {/* Gráfica de barras */}
       <div className="bg-white border border-gray-200 rounded-lg p-5 shadow-sm mb-8">
         <h2 className="text-sm font-medium text-gray-700 mb-4">Visitas por día</h2>
-        <div className="flex items-end gap-[2px] h-40 overflow-x-auto">
-          {dailyData.map((day) => (
-            <div key={day.fecha} className="flex flex-col items-center flex-1 min-w-[8px] group relative">
-              {/* Tooltip */}
-              <div className="absolute bottom-full mb-2 hidden group-hover:block bg-gray-800 text-white text-xs rounded px-2 py-1 whitespace-nowrap z-10">
-                {day.fecha}: {day.visitas} visitas, {day.unicos} únicos
-              </div>
-              {/* Barra */}
-              <div
-                className="w-full bg-[#1B4F72] rounded-t-sm hover:bg-[#2E86C1] transition-colors cursor-pointer"
-                style={{ height: `${(day.visitas / maxVisitas) * 100}%`, minHeight: day.visitas > 0 ? '4px' : '0px' }}
-              />
-            </div>
-          ))}
+        <div className="relative h-48">
+          <div className="absolute inset-0 flex items-end gap-1">
+            {dailyData.map((day) => {
+              const heightPct = maxVisitas > 0 ? (day.visitas / maxVisitas) * 100 : 0
+              return (
+                <div key={day.fecha} className="flex-1 flex flex-col items-center justify-end h-full group relative">
+                  {/* Tooltip */}
+                  <div className="absolute bottom-full mb-1 hidden group-hover:block bg-gray-800 text-white text-xs rounded px-2 py-1 whitespace-nowrap z-10">
+                    {day.fecha}: {day.visitas} visitas, {day.unicos} únicos
+                  </div>
+                  {/* Valor encima de la barra */}
+                  {day.visitas > 0 && (
+                    <span className="text-[9px] text-gray-500 mb-0.5 hidden group-hover:block">{day.visitas}</span>
+                  )}
+                  {/* Barra */}
+                  <div
+                    className="w-full max-w-[32px] bg-[#1B4F72] rounded-t hover:bg-[#2E86C1] transition-colors cursor-pointer"
+                    style={{ height: `${Math.max(heightPct, day.visitas > 0 ? 3 : 0)}%` }}
+                  />
+                </div>
+              )
+            })}
+          </div>
         </div>
         <div className="flex justify-between mt-2 text-xs text-gray-400">
           <span>{dailyData[0]?.fecha}</span>
