@@ -4,7 +4,7 @@
 
 Plataforma web para administrar y generar CV profesional en PDF. Permite agregar experiencias, educacion, certificaciones y referencias de forma incremental. Genera PDFs automaticamente con el formato profesional, watermark y proteccion de documentos.
 
-**URL en produccion:** https://cv-portfolio-beryl-nine.vercel.app
+**URL en produccion:** https://davidlezcano.vercel.app
 **Repositorio:** https://github.com/dlezcanob/cv-portfolio
 
 ---
